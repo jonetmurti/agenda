@@ -220,7 +220,7 @@ export class Job<DATA = unknown | void> {
 	}
 
 	private async fetchStatus(): Promise<void> {
-		const dbJob = await this.agenda.db.getJobs({ _id: this.attrs._id });
+		const dbJob = await this.agenda.getJobParams({ _id: this.attrs._id });
 		if (!dbJob || dbJob.length === 0) {
 			// @todo: should we just return false instead? a finished job could have been removed from database,
 			// and then this would throw...
@@ -493,4 +493,4 @@ export class Job<DATA = unknown | void> {
 	}
 }
 
-export type JobWithId = Job & { attrs: IJobParameters & { _id: ObjectId } };
+export type JobWithId = Job & { attrs: IJobParameters & { _id: ObjectId | string } };
