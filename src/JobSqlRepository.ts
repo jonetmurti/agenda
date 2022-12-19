@@ -27,7 +27,7 @@ export class JobSqlRepository {
 		log('JobSqlRepository created');
 	}
 
-	private async migrate(): Promise<void> {
+	private async migrate(ensureIndex?: boolean): Promise<void> {
 		const umzug = new Umzug({
 			migrations: {
 				glob: path.join(__dirname, './sequelize/migrations/*.js'),
@@ -35,7 +35,7 @@ export class JobSqlRepository {
 					const migration = require(path || '');
 					return {
 						name,
-						up: async () => migration.up(context, Sequelize),
+						up: async () => migration.up(context, Sequelize, ensureIndex),
 					}
 				},
 			},
@@ -100,8 +100,7 @@ export class JobSqlRepository {
 			this.connectOptions.enableMigration === undefined
 		) {
 			log('connect:', 'migrating db');
-			await this.migrate();
-			// TODO: create index?
+			await this.migrate(this.connectOptions.ensureIndex);
 		}
 
 		log('connect:', 'initialize sequelize model');
@@ -183,26 +182,30 @@ export class JobSqlRepository {
 
 	// test below
 	async lockJob(job: JobWithId): Promise<IJobParameters | undefined> {
-		// TODO: consider using transaction
-		const row = await JobModel.findOne({
-			where: {
-				_id: job.attrs._id as string,
-				name: job.attrs.name,
-				lockedAt: {
-					[Op.is]: null,
+		const row = await this.sequelize.transaction(async t => {
+			const row = await JobModel.findOne({
+				where: {
+					_id: job.attrs._id as string,
+					name: job.attrs.name,
+					lockedAt: {
+						[Op.is]: null,
+					},
+					nextRunAt: job.attrs.nextRunAt, // TODO: anticipate null
+					disabled: {
+						[Op.ne]: true,
+					},
 				},
-				nextRunAt: job.attrs.nextRunAt, // TODO: anticipate null
-				disabled: {
-					[Op.ne]: true,
-				},
-			},
-			order: this.connectOptions.sort,
-		});
+				order: this.connectOptions.sort,
+				transaction: t,
+			});
 
-		if (row) {
-			row.lockedAt = new Date();
-			await row.save();
-		}
+			if (row) {
+				row.lockedAt = new Date();
+				await row.save({ transaction: t });
+			}
+
+			return row;
+		});
 
 		return row?.toJSON() as IJobParameters || undefined;
 	}
@@ -213,36 +216,40 @@ export class JobSqlRepository {
 		lockDeadline: Date,
 		now: Date = new Date()
 	): Promise<IJobParameters | undefined> {
-		// TODO: consider using transaction
-		const row = await JobModel.findOne({
-			where: {
-				name: jobName,
-				disabled: {
-					[Op.ne]: true,
+		const row = await this.sequelize.transaction(async t => {
+			const row = await JobModel.findOne({
+				where: {
+					name: jobName,
+					disabled: {
+						[Op.ne]: true,
+					},
+					[Op.or]: [
+						{
+							lockedAt: {
+								[Op.is]: null,
+							},
+							nextRunAt: {
+								[Op.lte]: nextScanAt,
+							},
+						},
+						{
+							lockedAt: {
+								[Op.lte]: lockDeadline,
+							},
+						},
+					],
 				},
-				[Op.or]: [
-					{
-						lockedAt: {
-							[Op.is]: null,
-						},
-						nextRunAt: {
-							[Op.lte]: nextScanAt,
-						},
-					},
-					{
-						lockedAt: {
-							[Op.lte]: lockDeadline,
-						},
-					},
-				],
-			},
-			order: this.connectOptions.sort,
+				order: this.connectOptions.sort,
+				transaction: t,
+			});
+		
+			if (row) {
+				row.lockedAt = now;
+				await row.save({ transaction: t });
+			}
+
+			return row;
 		});
-	
-		if (row) {
-			row.lockedAt = now;
-			await row.save();
-		}
 
 		return row?.toJSON() as IJobParameters || undefined;
 	}
@@ -274,14 +281,14 @@ export class JobSqlRepository {
 			);
 		}
 		const set = {
-			lockedAt: (job.attrs.lockedAt && new Date(job.attrs.lockedAt)) || undefined,
-			nextRunAt: (job.attrs.nextRunAt && new Date(job.attrs.nextRunAt)) || undefined,
-			lastRunAt: (job.attrs.lastRunAt && new Date(job.attrs.lastRunAt)) || undefined,
-			progress: job.attrs.progress,
-			failReason: job.attrs.failReason,
+			lockedAt: (job.attrs.lockedAt && new Date(job.attrs.lockedAt)) || null,
+			nextRunAt: (job.attrs.nextRunAt && new Date(job.attrs.nextRunAt)) || null,
+			lastRunAt: (job.attrs.lastRunAt && new Date(job.attrs.lastRunAt)) || null,
+			progress: job.attrs.progress || null,
+			failReason: job.attrs.failReason || null,
 			failCount: job.attrs.failCount,
-			failedAt: job.attrs.failedAt && new Date(job.attrs.failedAt),
-			lastFinishedAt: (job.attrs.lastFinishedAt && new Date(job.attrs.lastFinishedAt)) || undefined,
+			failedAt: job.attrs.failedAt && new Date(job.attrs.failedAt) || null,
+			lastFinishedAt: (job.attrs.lastFinishedAt && new Date(job.attrs.lastFinishedAt)) || null,
 		};
 
 		log('[job %s] save job state: \n%O', id, set);
@@ -317,60 +324,72 @@ export class JobSqlRepository {
 			const now = new Date();
 
 			if (id) {
-				// TODO: consider using transaction
-				const row = await JobModel.findOne({
-					where: {
-						_id: id,
-						name: props.name,
-					},
+				const row = await this.sequelize.transaction(async t => {
+					const row = await JobModel.findOne({
+						where: {
+							_id: id,
+							name: props.name,
+						},
+						transaction: t,
+					});
+					if (row) {
+						row.set(props);
+						await row.save({ transaction: t });
+					}
+
+					return row;
 				});
-				if (row) {
-					row.set(props);
-					await row.save();
-				}
 				return this.processDbResult(job, row?.toJSON() as IJobParameters<DATA>);
 			}
 
 			if (props.type === 'single') {
 				log('job with type of "single" found');
-				// TODO: consider using transaction
-				let row = await JobModel.findOne({
-					where: {
-						name: props.name,
-						type: 'single',
-					},
-				});
-
-				if (row) {
-					if (props.nextRunAt && props.nextRunAt <= now) {
-						log('job has a scheduled nextRunAt time, protecting that field from upsert');
-						delete (props as Partial<IJobParameters>).nextRunAt;
+				const row = await this.sequelize.transaction(async t => {
+					let row = await JobModel.findOne({
+						where: {
+							name: props.name,
+							type: 'single',
+						},
+						transaction: t,
+					});
+	
+					if (row) {
+						if (props.nextRunAt && props.nextRunAt <= now) {
+							log('job has a scheduled nextRunAt time, protecting that field from upsert');
+							delete (props as Partial<IJobParameters>).nextRunAt;
+						}
+						row.set(props);
+						await row.save({ transaction: t });
+					} else {
+						row = await JobModel.create(props, { transaction: t });
 					}
-					row.set(props);
-					await row.save();
-				} else {
-					row = await JobModel.create(props);
-				}
+
+					return row;
+				});
 
 				return this.processDbResult(job, row?.toJSON() as IJobParameters<DATA>);
 			}
 
 			if (job.attrs.unique) {
 				const query = job.attrs.unique as  WhereOptions<InferAttributes<JobModel>>;
-				// TODO: consider using transaction
-				let row = await JobModel.findOne({
-					where: {
-						...query,
-						name: props.name,
-					},
-				});
+				const row = await this.sequelize.transaction(async t => {
+					let row = await JobModel.findOne({
+						where: {
+							...query,
+							name: props.name,
+						},
+						transaction: t,
+					});
+	
+					if (row && !job.attrs.uniqueOpts?.insertOnly) {
+						row.set(props);
+						await row.save({ transaction: t });
+					} else if (!row) {
+						row = await JobModel.create(props, { transaction: t });
+					}
 
-				if (row && !job.attrs.uniqueOpts?.insertOnly) {
-					row.set(props);
-					await row.save();
-				} else if (!row) {
-					row = await JobModel.create(props);
-				}
+					return row;
+				});
 	
 				return this.processDbResult(job, row?.toJSON() as IJobParameters<DATA>);
 			}

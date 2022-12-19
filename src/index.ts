@@ -19,6 +19,7 @@ import { calculateProcessEvery } from './utils/processEvery';
 import { getCallerFilePath } from './utils/stack';
 import { Options, Sequelize, WhereOptions, InferAttributes, Order, Op } from 'sequelize';
 import { JobModel } from './sequelize/models/job';
+import { hasSqlProtocol } from './utils/hasSqlProtocol';
 
 const log = debug('agenda');
 
@@ -247,7 +248,11 @@ export class Agenda extends EventEmitter {
 	private hasDatabaseConfig(
 		config: unknown
 	): config is (IDatabaseOptions | IMongoOptions) & IDbConfig {
-		return !!((config as IDatabaseOptions)?.db?.address || (config as IMongoOptions)?.mongo);
+		const address = (config as IDatabaseOptions)?.db?.address;
+		return !!(
+			(address && !hasSqlProtocol(address)) ||
+			(config as IMongoOptions)?.mongo
+		);
 	}
 
 	/**
@@ -361,8 +366,8 @@ export class Agenda extends EventEmitter {
 	async jobs(
 		query: Filter<IJobParameters> | WhereOptions<InferAttributes<JobModel>> = {},
 		sort?: Sort | Order,
-		limit = 0,
-		skip = 0
+		limit?: number,
+		skip?: number
 	): Promise<Job[]> {
 		const result = await this.getJobParams(query, sort, limit, skip);
 		return result.map(job => new Job(this, job));
@@ -371,8 +376,8 @@ export class Agenda extends EventEmitter {
 	async getJobParams(
 		query: Filter<IJobParameters> | WhereOptions<InferAttributes<JobModel>> = {},
 		sort?: Sort | Order,
-		limit = 0,
-		skip = 0
+		limit?: number,
+		skip?: number
 	): Promise<IJobParameters[]> {
 		let result: IJobParameters[];
 		if (this.lang === 'sql') {
@@ -386,7 +391,7 @@ export class Agenda extends EventEmitter {
 				await (this.db as JobDbRepository).getJobs(
 					query as Filter<IJobParameters>,
 					sort as Sort || {},
-					limit, skip);
+					limit || 0, skip || 0);
 		}
 
 		return result;
@@ -682,7 +687,3 @@ export * from './types/JobParameters';
 export * from './types/DbOptions';
 
 export * from './Job';
-
-export * from './JobSqlRepository';
-
-export * from './JobDbRepository';
