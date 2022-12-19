@@ -1,20 +1,25 @@
 import { EventEmitter } from 'events';
 import * as debug from 'debug';
 
-import type { Db, Filter, MongoClientOptions, Sort } from 'mongodb';
+import type { Db, Filter, MongoClientOptions, ObjectId, Sort } from 'mongodb';
 import { SortDirection } from 'mongodb';
 import { ForkOptions } from 'child_process';
 import type { IJobDefinition } from './types/JobDefinition';
 import type { IAgendaConfig } from './types/AgendaConfig';
 import type { IDatabaseOptions, IDbConfig, IMongoOptions } from './types/DbOptions';
+import type { ISqlConfig, ISqlConnection, ISqlOptions } from './types/DbOptions';
 import type { IAgendaStatus } from './types/AgendaStatus';
 import type { IJobParameters } from './types/JobParameters';
 import { Job, JobWithId } from './Job';
 import { JobDbRepository } from './JobDbRepository';
+import { JobSqlRepository } from './JobSqlRepository';
 import { JobPriority, parsePriority } from './utils/priority';
 import { JobProcessor } from './JobProcessor';
 import { calculateProcessEvery } from './utils/processEvery';
 import { getCallerFilePath } from './utils/stack';
+import { Options, Sequelize, WhereOptions, InferAttributes, Order, Op } from 'sequelize';
+import { JobModel } from './sequelize/models/job';
+import { hasSqlProtocol } from './utils/hasSqlProtocol';
 
 const log = debug('agenda');
 
@@ -26,6 +31,10 @@ const DefaultOptions = {
 	lockLimit: 0,
 	defaultLockLifetime: 10 * 60 * 1000,
 	sort: { nextRunAt: 1, priority: -1 } as const,
+	sqlSort: [
+		['nextRunAt', 'ASC'],
+		['priority', 'DESC'],
+	] as Order,
 	forkHelper: { path: 'dist/childWorker.js' }
 };
 
@@ -33,7 +42,7 @@ const DefaultOptions = {
  * @class
  */
 export class Agenda extends EventEmitter {
-	readonly attrs: IAgendaConfig & IDbConfig;
+	readonly attrs: IAgendaConfig & (IDbConfig | ISqlConfig);
 
 	public readonly forkedWorker?: boolean;
 
@@ -42,7 +51,9 @@ export class Agenda extends EventEmitter {
 		options?: ForkOptions;
 	};
 
-	db: JobDbRepository;
+	db: JobDbRepository | JobSqlRepository;
+
+	lang: 'sql' | 'mongo';
 
 	// internally used
 	on(event: 'processJob', listener: (job: JobWithId) => void): this;
@@ -106,8 +117,8 @@ export class Agenda extends EventEmitter {
 			lockLimit?: number;
 			defaultLockLifetime?: number;
 			// eslint-disable-next-line @typescript-eslint/ban-types
-		} & (IDatabaseOptions | IMongoOptions | {}) &
-			IDbConfig & {
+		} & (IDatabaseOptions | IMongoOptions | ISqlOptions | ISqlConnection | {}) &
+			(IDbConfig | ISqlConfig) & {
 				forkHelper?: { path: string; options?: ForkOptions };
 				forkedWorker?: boolean;
 			} = DefaultOptions,
@@ -123,7 +134,7 @@ export class Agenda extends EventEmitter {
 			defaultLockLimit: config.defaultLockLimit || DefaultOptions.defaultLockLimit,
 			lockLimit: config.lockLimit || DefaultOptions.lockLimit,
 			defaultLockLifetime: config.defaultLockLifetime || DefaultOptions.defaultLockLifetime, // 10 minute default lockLifetime
-			sort: config.sort || DefaultOptions.sort
+			sort: config.sort as { [key: string]: SortDirection } || DefaultOptions.sort
 		};
 
 		this.forkedWorker = config.forkedWorker;
@@ -134,7 +145,17 @@ export class Agenda extends EventEmitter {
 		});
 
 		if (this.hasDatabaseConfig(config)) {
+			log('agenda constructor using mongodb');
+			this.lang = 'mongo';
 			this.db = new JobDbRepository(this, config);
+			this.db.connect();
+		}
+	
+		if (this.hasSqlConfig(config)) {
+			log('agenda constructor using sql');
+			this.lang = 'sql';
+			this.setSqlSort(config.sort);
+			this.db = new JobSqlRepository(this, config);
 			this.db.connect();
 		}
 
@@ -143,17 +164,45 @@ export class Agenda extends EventEmitter {
 		}
 	}
 
+	private setSqlSort(sort?: Order): void {
+		this.attrs.sort = sort || DefaultOptions.sqlSort;
+	}
+
 	/**
 	 * Connect to the spec'd MongoDB server and database.
 	 */
+	// TODO: find where this method is used (alter the order of parameters)
 	async database(
 		address: string,
+		options?: Options,
+	): Promise<Agenda>;
+	async database(
+		address: string,
+		options?: MongoClientOptions | Options,
 		collection?: string,
-		options?: MongoClientOptions
 	): Promise<Agenda> {
+		if (this.hasSqlOptions(options)) {
+			log('.database(...) using SQL connection');
+			this.lang = 'sql';
+			this.setSqlSort();
+			this.db = new JobSqlRepository(this, {
+				db: {
+					address,
+					options,
+				}
+			});
+			await this.db.connect();
+			return this;
+		}
+		log('.database(...) using Mongo connection');
+		this.lang = 'mongo';
 		this.db = new JobDbRepository(this, { db: { address, collection, options } });
 		await this.db.connect();
 		return this;
+	}
+
+	private hasSqlOptions(options: unknown): options is Options {
+		return !!(options as Options)?.dialect;
 	}
 
 	/**
@@ -162,7 +211,16 @@ export class Agenda extends EventEmitter {
 	 * @param collection
 	 */
 	async mongo(mongo: Db, collection?: string): Promise<Agenda> {
+		this.lang = 'mongo';
 		this.db = new JobDbRepository(this, { mongo, db: { collection } });
+		await this.db.connect();
+		return this;
+	}
+
+	async sql(connection: Sequelize): Promise<Agenda> {
+		this.lang = 'sql';
+		this.setSqlSort();
+		this.db = new JobSqlRepository(this, { sequelize: connection });
 		await this.db.connect();
 		return this;
 	}
@@ -172,26 +230,48 @@ export class Agenda extends EventEmitter {
 	 * Default is { nextRunAt: 1, priority: -1 }
 	 * @param query
 	 */
-	sort(query: { [key: string]: SortDirection }): Agenda {
+	sort(query: { [key: string]: SortDirection } | Order): Agenda {
 		log('Agenda.sort([Object])');
 		this.attrs.sort = query;
 		return this;
 	}
 
+	private hasSqlConfig(
+		config: unknown
+	): config is (ISqlOptions | ISqlConnection) & ISqlConfig {
+		return !!(
+			(config as ISqlConnection)?.sequelize ||
+			(config as ISqlOptions)?.db?.options?.dialect
+		);
+	}
+
 	private hasDatabaseConfig(
 		config: unknown
 	): config is (IDatabaseOptions | IMongoOptions) & IDbConfig {
-		return !!((config as IDatabaseOptions)?.db?.address || (config as IMongoOptions)?.mongo);
+		const address = (config as IDatabaseOptions)?.db?.address;
+		return !!(
+			(address && !hasSqlProtocol(address)) ||
+			(config as IMongoOptions)?.mongo
+		);
 	}
 
 	/**
 	 * Cancels any jobs matching the passed MongoDB query, and removes them from the database.
 	 * @param query
 	 */
-	async cancel(query: Filter<IJobParameters>): Promise<number> {
+	async cancel(query: Filter<IJobParameters> | WhereOptions<InferAttributes<JobModel>>): Promise<number> {
 		log('attempting to cancel all Agenda jobs', query);
 		try {
-			const amountOfRemovedJobs = await this.db.removeJobs(query);
+			let amountOfRemovedJobs: number;
+			if (this.lang === 'sql') {
+				amountOfRemovedJobs =
+					await (this.db as JobSqlRepository)
+						.removeJobs(query as WhereOptions<InferAttributes<JobModel>>);
+			} else {
+				amountOfRemovedJobs =
+					await (this.db as JobDbRepository)
+						.removeJobs(query as Filter<IJobParameters>);
+			}
 			log('%s jobs cancelled', amountOfRemovedJobs);
 			return amountOfRemovedJobs;
 		} catch (error) {
@@ -284,14 +364,37 @@ export class Agenda extends EventEmitter {
 	 * @param skip
 	 */
 	async jobs(
-		query: Filter<IJobParameters> = {},
-		sort: Sort = {},
-		limit = 0,
-		skip = 0
+		query: Filter<IJobParameters> | WhereOptions<InferAttributes<JobModel>> = {},
+		sort?: Sort | Order,
+		limit?: number,
+		skip?: number
 	): Promise<Job[]> {
-		const result = await this.db.getJobs(query, sort, limit, skip);
-
+		const result = await this.getJobParams(query, sort, limit, skip);
 		return result.map(job => new Job(this, job));
+	}
+
+	async getJobParams(
+		query: Filter<IJobParameters> | WhereOptions<InferAttributes<JobModel>> = {},
+		sort?: Sort | Order,
+		limit?: number,
+		skip?: number
+	): Promise<IJobParameters[]> {
+		let result: IJobParameters[];
+		if (this.lang === 'sql') {
+			result =
+				await (this.db as JobSqlRepository).getJobs(
+					query as WhereOptions<InferAttributes<JobModel>>,
+					sort as Order || [],
+					limit, skip);
+		} else {
+			result =
+				await (this.db as JobDbRepository).getJobs(
+					query as Filter<IJobParameters>,
+					sort as Sort || {},
+					limit || 0, skip || 0);
+		}
+
+		return result;
 	}
 
 	/**
@@ -301,6 +404,9 @@ export class Agenda extends EventEmitter {
 	async purge(): Promise<number> {
 		const definedNames = Object.keys(this.definitions);
 		log('Agenda.purge(%o)', definedNames);
+		if (this.lang === 'sql') {
+			return this.cancel({ name: { [Op.notIn]: definedNames } });
+		}
 		return this.cancel({ name: { $not: { $in: definedNames } } });
 	}
 
@@ -559,7 +665,11 @@ export class Agenda extends EventEmitter {
 
 		if (jobIds.length > 0) {
 			log('about to unlock jobs with ids: %O', jobIds);
-			await this.db.unlockJobs(jobIds);
+			if (this.lang === 'sql') {
+				await (this.db as JobSqlRepository).unlockJobs(jobIds as string[]);
+			} else {
+				await (this.db as JobDbRepository).unlockJobs(jobIds as ObjectId[]);
+			}
 		}
 
 		this.off('processJob', this.jobProcessor.process.bind(this.jobProcessor));

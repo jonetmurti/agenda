@@ -1,4 +1,5 @@
 import type { Db, MongoClientOptions, SortDirection } from 'mongodb';
+import type { Options, Sequelize, Order } from 'sequelize';
 
 export interface IDatabaseOptions {
 	db: {
@@ -20,4 +21,21 @@ export interface IDbConfig {
 	sort?: {
 		[key: string]: SortDirection;
 	};
+}
+
+export interface ISqlOptions {
+	db: {
+		address?: string;
+		options: Options;
+	},
+}
+
+export interface ISqlConfig {
+	ensureIndex?: boolean;
+	enableMigration?: boolean;
+	sort?: Order;
+}
+
+export interface ISqlConnection {
+	sequelize: Sequelize;
 }
