@@ -4,10 +4,17 @@ import * as debug from 'debug';
 import type { Db, Filter, MongoClientOptions, ObjectId, Sort } from 'mongodb';
 import { SortDirection } from 'mongodb';
 import { ForkOptions } from 'child_process';
+import { Options, Sequelize, WhereOptions, InferAttributes, Order, Op } from 'sequelize';
 import type { IJobDefinition } from './types/JobDefinition';
 import type { IAgendaConfig } from './types/AgendaConfig';
-import type { IDatabaseOptions, IDbConfig, IMongoOptions } from './types/DbOptions';
-import type { ISqlConfig, ISqlConnection, ISqlOptions } from './types/DbOptions';
+import type {
+	IDatabaseOptions,
+	IDbConfig,
+	IMongoOptions,
+	ISqlConfig,
+	ISqlConnection,
+	ISqlOptions
+} from './types/DbOptions';
 import type { IAgendaStatus } from './types/AgendaStatus';
 import type { IJobParameters } from './types/JobParameters';
 import { Job, JobWithId } from './Job';
@@ -17,7 +24,6 @@ import { JobPriority, parsePriority } from './utils/priority';
 import { JobProcessor } from './JobProcessor';
 import { calculateProcessEvery } from './utils/processEvery';
 import { getCallerFilePath } from './utils/stack';
-import { Options, Sequelize, WhereOptions, InferAttributes, Order, Op } from 'sequelize';
 import { JobModel } from './sequelize/models/job';
 import { hasSqlProtocol } from './utils/hasSqlProtocol';
 
@@ -33,7 +39,7 @@ const DefaultOptions = {
 	sort: { nextRunAt: 1, priority: -1 } as const,
 	sqlSort: [
 		['nextRunAt', 'ASC'],
-		['priority', 'DESC'],
+		['priority', 'DESC']
 	] as Order,
 	forkHelper: { path: 'dist/childWorker.js' }
 };
@@ -134,7 +140,7 @@ export class Agenda extends EventEmitter {
 			defaultLockLimit: config.defaultLockLimit || DefaultOptions.defaultLockLimit,
 			lockLimit: config.lockLimit || DefaultOptions.lockLimit,
 			defaultLockLifetime: config.defaultLockLifetime || DefaultOptions.defaultLockLifetime, // 10 minute default lockLifetime
-			sort: config.sort as { [key: string]: SortDirection } || DefaultOptions.sort
+			sort: (config.sort as { [key: string]: SortDirection }) || DefaultOptions.sort
 		};
 
 		this.forkedWorker = config.forkedWorker;
@@ -150,7 +156,7 @@ export class Agenda extends EventEmitter {
 			this.db = new JobDbRepository(this, config);
 			this.db.connect();
 		}
-	
+
 		if (this.hasSqlConfig(config)) {
 			log('agenda constructor using sql');
 			this.lang = 'sql';
@@ -172,14 +178,11 @@ export class Agenda extends EventEmitter {
 	 * Connect to the spec'd MongoDB server and database.
 	 */
 	// TODO: find where this method is used (alter the order of parameters)
-	async database(
-		address: string,
-		options?: Options,
-	): Promise<Agenda>;
+	async database(address: string, options?: Options): Promise<Agenda>;
 	async database(
 		address: string,
 		options?: MongoClientOptions | Options,
-		collection?: string,
+		collection?: string
 	): Promise<Agenda> {
 		if (this.hasSqlOptions(options)) {
 			log('.database(...) using SQL connection');
@@ -188,7 +191,7 @@ export class Agenda extends EventEmitter {
 			this.db = new JobSqlRepository(this, {
 				db: {
 					address,
-					options,
+					options
 				}
 			});
 			await this.db.connect();
@@ -236,12 +239,9 @@ export class Agenda extends EventEmitter {
 		return this;
 	}
 
-	private hasSqlConfig(
-		config: unknown
-	): config is (ISqlOptions | ISqlConnection) & ISqlConfig {
+	private hasSqlConfig(config: unknown): config is (ISqlOptions | ISqlConnection) & ISqlConfig {
 		return !!(
-			(config as ISqlConnection)?.sequelize ||
-			(config as ISqlOptions)?.db?.options?.dialect
+			(config as ISqlConnection)?.sequelize || (config as ISqlOptions)?.db?.options?.dialect
 		);
 	}
 
@@ -249,28 +249,27 @@ export class Agenda extends EventEmitter {
 		config: unknown
 	): config is (IDatabaseOptions | IMongoOptions) & IDbConfig {
 		const address = (config as IDatabaseOptions)?.db?.address;
-		return !!(
-			(address && !hasSqlProtocol(address)) ||
-			(config as IMongoOptions)?.mongo
-		);
+		return !!((address && !hasSqlProtocol(address)) || (config as IMongoOptions)?.mongo);
 	}
 
 	/**
 	 * Cancels any jobs matching the passed MongoDB query, and removes them from the database.
 	 * @param query
 	 */
-	async cancel(query: Filter<IJobParameters> | WhereOptions<InferAttributes<JobModel>>): Promise<number> {
+	async cancel(
+		query: Filter<IJobParameters> | WhereOptions<InferAttributes<JobModel>>
+	): Promise<number> {
 		log('attempting to cancel all Agenda jobs', query);
 		try {
 			let amountOfRemovedJobs: number;
 			if (this.lang === 'sql') {
-				amountOfRemovedJobs =
-					await (this.db as JobSqlRepository)
-						.removeJobs(query as WhereOptions<InferAttributes<JobModel>>);
+				amountOfRemovedJobs = await (this.db as JobSqlRepository).removeJobs(
+					query as WhereOptions<InferAttributes<JobModel>>
+				);
 			} else {
-				amountOfRemovedJobs =
-					await (this.db as JobDbRepository)
-						.removeJobs(query as Filter<IJobParameters>);
+				amountOfRemovedJobs = await (this.db as JobDbRepository).removeJobs(
+					query as Filter<IJobParameters>
+				);
 			}
 			log('%s jobs cancelled', amountOfRemovedJobs);
 			return amountOfRemovedJobs;
@@ -381,17 +380,19 @@ export class Agenda extends EventEmitter {
 	): Promise<IJobParameters[]> {
 		let result: IJobParameters[];
 		if (this.lang === 'sql') {
-			result =
-				await (this.db as JobSqlRepository).getJobs(
-					query as WhereOptions<InferAttributes<JobModel>>,
-					sort as Order || [],
-					limit, skip);
+			result = await (this.db as JobSqlRepository).getJobs(
+				query as WhereOptions<InferAttributes<JobModel>>,
+				(sort as Order) || [],
+				limit,
+				skip
+			);
 		} else {
-			result =
-				await (this.db as JobDbRepository).getJobs(
-					query as Filter<IJobParameters>,
-					sort as Sort || {},
-					limit || 0, skip || 0);
+			result = await (this.db as JobDbRepository).getJobs(
+				query as Filter<IJobParameters>,
+				(sort as Sort) || {},
+				limit || 0,
+				skip || 0
+			);
 		}
 
 		return result;

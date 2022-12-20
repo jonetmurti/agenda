@@ -27,7 +27,7 @@ export interface ISqlOptions {
 	db: {
 		address?: string;
 		options: Options;
-	},
+	};
 }
 
 export interface ISqlConfig {
