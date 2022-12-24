@@ -7,30 +7,26 @@ jobs:
     strategy:
       matrix:
         node-version: [14, 16, 18]
-        database: [
-          {
-            dialect: "postgres",
-            address: "postgres://postgres:postgres@localhost:5432/agenda_db"
-          }
-        ]
+        mysql-version: [5.7, 8]
     services:
       # Label used to access the service container
       postgres:
         # Docker Hub image
-        image: ${{ matrix.database.dialect }}
-        # Provide the password for postgres
+        image: ${{ format('mysql:{0}', matrix.mysql-version) }}
         env:
-          POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: agenda_db
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_USER: agenda_sql
+          MYSQL_PASSWORD: agenda_sql
+          MYSQL_DATABASE: agenda_db
         # Set health checks to wait until postgres has started
         options: >-
-          --health-cmd pg_isready
+          --health-cmd "mysqladmin ping -h localhost -u agenda_sql -p'agenda_sql'"
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
         ports:
           # Maps tcp port 5432 on service container to the host
-          - 5432:5432
+          - 3306:3306
     steps:
       - name: Git checkout
         uses: actions/checkout@v2
@@ -39,11 +35,6 @@ jobs:
         uses: actions/setup-node@v2
         with:
           node-version: ${{ matrix.node-version }}
-
-      # - name: Start MongoDB
-      #   uses: supercharge/mongodb-github-action@1.6.0
-      #   with:
-      #     mongodb-version: ${{ matrix.mongodb-version }}
 
       - name: Cache node modules
         uses: actions/cache@v2
@@ -74,5 +65,5 @@ jobs:
         run: npm run test
         env:
           CI: true
-          CI_DB_DIALECT: ${{ matrix.database.dialect }}
-          CI_DB_ADDRESS: ${{ matrix.database.address }}
+          CI_DB_DIALECT: mysql
+          CI_DB_ADDRESS: mysql://agenda_sql:agenda_sql@localhost:3306/agenda_db
