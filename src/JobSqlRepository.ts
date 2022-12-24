@@ -1,11 +1,17 @@
 import * as debug from 'debug';
-// import * as path from 'path';
-import { Sequelize, WhereOptions, InferAttributes, Op, Order } from 'sequelize';
-// import { Umzug, SequelizeStorage } from 'umzug';
+import {
+	Sequelize,
+	WhereOptions,
+	InferAttributes,
+	Op,
+	Order,
+	OptimisticLockError
+} from 'sequelize';
 import type { Job, JobWithId } from './Job';
 import type { Agenda } from './index';
 import type { ISqlConfig, ISqlConnection, ISqlOptions } from './types/DbOptions';
 import type { IJobParameters } from './types/JobParameters';
+import { Migration } from './sequelize/migrations';
 import { initModel, JobModel } from './sequelize/models/job';
 
 const log = debug('agenda:sql');
@@ -26,28 +32,6 @@ export class JobSqlRepository {
 		];
 		log('JobSqlRepository created');
 	}
-
-	// private async migrate(ensureIndex?: boolean): Promise<void> {
-	// 	const umzug = new Umzug({
-	// 		migrations: {
-	// 			glob: path.join(__dirname, './sequelize/migrations/*.js'),
-	// 			resolve: ({ name, path: filepath, context }) => {
-	// 				const migration = require(filepath as string);
-	// 				return {
-	// 					name,
-	// 					up: async () => migration.up(context, Sequelize, ensureIndex)
-	// 				};
-	// 			}
-	// 		},
-	// 		context: this.sequelize.getQueryInterface(),
-	// 		storage: new SequelizeStorage({
-	// 			sequelize: this.sequelize,
-	// 			tableName: 'sequelize_meta'
-	// 		}),
-	// 		logger: undefined
-	// 	});
-	// 	await umzug.up();
-	// }
 
 	private async createConnection(): Promise<Sequelize> {
 		const { connectOptions } = this;
@@ -92,17 +76,14 @@ export class JobSqlRepository {
 		log('connect:', 'creating connection');
 		this.sequelize = await this.createConnection();
 
-		// if (this.connectOptions.enableMigration || this.connectOptions.enableMigration === undefined) {
-		// 	log('connect:', 'migrating db');
-		// 	await this.migrate(this.connectOptions.ensureIndex);
-		// }
+		if (this.connectOptions.enableMigration) {
+			log('connect:', 'migrating db');
+			const migration = new Migration(this.sequelize, this.connectOptions.ensureIndex);
+			await migration.migrate();
+		}
 
 		log('connect:', 'initialize sequelize model');
-		await initModel(
-			this.sequelize,
-			this.connectOptions.enableMigration,
-			this.connectOptions.ensureIndex
-		);
+		initModel(this.sequelize);
 
 		this.agenda.emit('ready');
 	}
@@ -184,34 +165,40 @@ export class JobSqlRepository {
 		);
 	}
 
-	// test below
 	async lockJob(job: JobWithId): Promise<IJobParameters | undefined> {
-		const result = await this.sequelize.transaction(async t => {
-			const row = await JobModel.findOne({
-				where: {
-					_id: job.attrs._id as string,
-					name: job.attrs.name,
-					lockedAt: {
-						[Op.is]: null
+		try {
+			const result = await this.sequelize.transaction(async t => {
+				const row = await JobModel.findOne({
+					where: {
+						_id: job.attrs._id as string,
+						name: job.attrs.name,
+						lockedAt: {
+							[Op.is]: null
+						},
+						nextRunAt: job.attrs.nextRunAt, // TODO: anticipate null
+						disabled: {
+							[Op.ne]: true
+						}
 					},
-					nextRunAt: job.attrs.nextRunAt, // TODO: anticipate null
-					disabled: {
-						[Op.ne]: true
-					}
-				},
-				order: this.connectOptions.sort,
-				transaction: t
+					order: this.connectOptions.sort,
+					transaction: t
+				});
+
+				if (row) {
+					row.lockedAt = new Date();
+					await row.save({ transaction: t });
+				}
+
+				return row;
 			});
 
-			if (row) {
-				row.lockedAt = new Date();
-				await row.save({ transaction: t });
+			return (result?.toJSON() as IJobParameters) || undefined;
+		} catch (err) {
+			if (!(err instanceof OptimisticLockError)) {
+				throw err;
 			}
-
-			return row;
-		});
-
-		return (result?.toJSON() as IJobParameters) || undefined;
+		}
+		return undefined;
 	}
 
 	async getNextJobToRun(
@@ -220,42 +207,49 @@ export class JobSqlRepository {
 		lockDeadline: Date,
 		now: Date = new Date()
 	): Promise<IJobParameters | undefined> {
-		const result = await this.sequelize.transaction(async t => {
-			const row = await JobModel.findOne({
-				where: {
-					name: jobName,
-					disabled: {
-						[Op.ne]: true
-					},
-					[Op.or]: [
-						{
-							lockedAt: {
-								[Op.is]: null
-							},
-							nextRunAt: {
-								[Op.lte]: nextScanAt
-							}
+		try {
+			const result = await this.sequelize.transaction(async t => {
+				const row = await JobModel.findOne({
+					where: {
+						name: jobName,
+						disabled: {
+							[Op.ne]: true
 						},
-						{
-							lockedAt: {
-								[Op.lte]: lockDeadline
+						[Op.or]: [
+							{
+								lockedAt: {
+									[Op.eq]: null
+								},
+								nextRunAt: {
+									[Op.lte]: nextScanAt
+								}
+							},
+							{
+								lockedAt: {
+									[Op.lte]: lockDeadline
+								}
 							}
-						}
-					]
-				},
-				order: this.connectOptions.sort,
-				transaction: t
+						]
+					},
+					order: this.connectOptions.sort,
+					transaction: t
+				});
+
+				if (row) {
+					row.lockedAt = now;
+					await row.save({ transaction: t });
+				}
+
+				return row;
 			});
 
-			if (row) {
-				row.lockedAt = now;
-				await row.save({ transaction: t });
+			return (result?.toJSON() as IJobParameters) || undefined;
+		} catch (err) {
+			if (!(err instanceof OptimisticLockError)) {
+				throw err;
 			}
-
-			return row;
-		});
-
-		return (result?.toJSON() as IJobParameters) || undefined;
+		}
+		return undefined;
 	}
 
 	private processDbResult<DATA = unknown | void>(

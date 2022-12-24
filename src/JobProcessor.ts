@@ -195,7 +195,7 @@ export class JobProcessor {
 	}
 
 	/**
-	 * Internal method that will lock a job and store it on MongoDB
+	 * Internal method that will lock a job and store it on Database
 	 * This method is called when we immediately start to process a job without using the process interval
 	 * We do this because sometimes jobs are scheduled but will be run before the next process time
 	 * @returns {undefined}
@@ -235,7 +235,7 @@ export class JobProcessor {
 					return;
 				}
 
-				// Lock the job in MongoDB!
+				// Lock the job in Database!
 				const resp = await this.agenda.db.lockJob(job);
 
 				if (resp) {

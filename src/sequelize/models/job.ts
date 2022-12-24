@@ -24,7 +24,7 @@ export class JobModel extends Model<InferAttributes<JobModel>, InferCreationAttr
 
 	declare failedAt: Date | null | undefined;
 
-	declare failCount: CreationOptional<number>;
+	declare failCount: number | null | undefined;
 
 	declare failReason: string | null | undefined;
 
@@ -47,11 +47,7 @@ export class JobModel extends Model<InferAttributes<JobModel>, InferCreationAttr
 	declare fork: CreationOptional<boolean>; // default false
 }
 
-export async function initModel(
-	sequelize: Sequelize,
-	enableMigration?: boolean,
-	ensureIndex?: boolean
-): Promise<void> {
+export function initModel(sequelize: Sequelize): void {
 	JobModel.init(
 		{
 			_id: {
@@ -70,7 +66,7 @@ export async function initModel(
 				allowNull: false
 			},
 			nextRunAt: {
-				type: DataTypes.DATE,
+				type: DataTypes.DATE(6),
 				defaultValue: null,
 				allowNull: true
 			},
@@ -81,24 +77,24 @@ export async function initModel(
 				allowNull: false
 			},
 			lockedAt: {
-				type: DataTypes.DATE,
+				type: DataTypes.DATE(6),
 				defaultValue: null,
 				allowNull: true
 			},
 			lastFinishedAt: {
-				type: DataTypes.DATE,
+				type: DataTypes.DATE(6),
 				defaultValue: null,
 				allowNull: true
 			},
 			failedAt: {
-				type: DataTypes.DATE,
+				type: DataTypes.DATE(6),
 				defaultValue: null,
 				allowNull: true
 			},
 			failCount: {
 				type: DataTypes.INTEGER,
-				defaultValue: 0,
-				allowNull: false
+				defaultValue: null,
+				allowNull: true
 			},
 			failReason: {
 				type: DataTypes.STRING,
@@ -111,7 +107,7 @@ export async function initModel(
 				allowNull: true
 			},
 			lastRunAt: {
-				type: DataTypes.DATE,
+				type: DataTypes.DATE(6),
 				defaultValue: null,
 				allowNull: true
 			},
@@ -157,40 +153,7 @@ export async function initModel(
 			tableName: 'agenda_jobs',
 			timestamps: false,
 			underscored: true,
-			indexes: !ensureIndex
-				? undefined
-				: [
-						{
-							name: 'find_next_job_index',
-							using: 'BTREE',
-							fields: [
-								{
-									name: 'name',
-									order: 'ASC'
-								},
-								{
-									name: 'priority',
-									order: 'DESC'
-								},
-								{
-									name: 'locked_at',
-									order: 'ASC'
-								},
-								{
-									name: 'next_run_at',
-									order: 'ASC'
-								},
-								{
-									name: 'disabled',
-									order: 'ASC'
-								}
-							]
-						}
-				  ]
+			version: true
 		}
 	);
-
-	if (enableMigration) {
-		await JobModel.sync();
-	}
 }

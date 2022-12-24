@@ -12,8 +12,19 @@ const log = debug('agenda:nextRunAt');
 const dateForTimezone = (timezoneDate: Date, timezone?: string): DateTime =>
 	DateTime.fromJSDate(timezoneDate, { zone: timezone });
 
+function isInteger(value: string): boolean {
+	return /^\d+$/.test(value);
+}
+
+function stringToInteger(value: unknown): unknown | number {
+	if (typeof value === 'string' && isInteger(value)) {
+		return parseInt(value, 10);
+	}
+	return value;
+}
+
 export function isValidHumanInterval(value: unknown): value is string {
-	const transformedValue = humanInterval(value as string);
+	const transformedValue = humanInterval(stringToInteger(value) as string);
 	return typeof transformedValue === 'number' && Number.isNaN(transformedValue) === false;
 }
 
@@ -21,6 +32,7 @@ export function isValidHumanInterval(value: unknown): value is string {
  * Internal method that computes the interval
  */
 export const computeFromInterval = (attrs: IJobParameters<any>): Date => {
+	// console.log('repeat interval', attrs.repeatInterval);
 	const previousNextRunAt = attrs.nextRunAt || new Date();
 	log('[%s:%s] computing next run via interval [%s]', attrs.name, attrs._id, attrs.repeatInterval);
 
@@ -60,7 +72,9 @@ export const computeFromInterval = (attrs: IJobParameters<any>): Date => {
 		if (!attrs.lastRunAt) {
 			nextRunAt = new Date(lastRun.valueOf());
 		} else {
-			const intervalValue = humanInterval(attrs.repeatInterval) as number;
+			const intervalValue = humanInterval(
+				stringToInteger(attrs.repeatInterval) as string
+			) as number;
 			nextRunAt = new Date(lastRun.valueOf() + intervalValue);
 		}
 	}

@@ -1,6 +1,5 @@
 import * as date from 'date.js';
 import * as debug from 'debug';
-import { ObjectId } from 'mongodb';
 import { ChildProcess, fork } from 'child_process';
 import type { Agenda } from './index';
 import type { DefinitionProcessor } from './types/JobDefinition';
@@ -405,13 +404,14 @@ export class Job<DATA = unknown | void> {
 					this.forkedChild.on('message', message => {
 						// console.log(`Message from child.js: ${message}`, JSON.stringify(message));
 						if (typeof message === 'string') {
-							try {
-								childError = JSON.parse(message);
-							} catch (errJson) {
-								childError = message;
-							}
-						} else {
+							// try {
+							// 	childError = JSON.parse(message);
+							// } catch (errJson) {
+							// 	childError = message;
+							// }
 							childError = message;
+						} else {
+							childError = 'an error has happened';
 						}
 					});
 				});
@@ -437,11 +437,11 @@ export class Job<DATA = unknown | void> {
 			this.attrs.lockedAt = undefined;
 			try {
 				await this.agenda.db.saveJobState(this);
-				log('[%s:%s] was saved successfully to MongoDB', this.attrs.name, this.attrs._id);
+				log('[%s:%s] was saved successfully to Database', this.attrs.name, this.attrs._id);
 			} catch (err) {
 				// in case this fails, we ignore it
 				// this can e.g. happen if the job gets removed during the execution
-				log('[%s:%s] was not saved to MongoDB', this.attrs.name, this.attrs._id, err);
+				log('[%s:%s] was not saved to Database', this.attrs.name, this.attrs._id, err);
 			}
 
 			this.agenda.emit('complete', this);
@@ -493,4 +493,4 @@ export class Job<DATA = unknown | void> {
 	}
 }
 
-export type JobWithId = Job & { attrs: IJobParameters & { _id: ObjectId | string } };
+export type JobWithId = Job & { attrs: IJobParameters & { _id: string } };

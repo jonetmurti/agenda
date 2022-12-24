@@ -7,7 +7,29 @@ jobs:
     strategy:
       matrix:
         node-version: [14, 16, 18]
-        mongodb-version: [3.6, 4.4, 5.0, 6.0]
+        database: [
+          {
+            dialect: "postgres",
+            address: "postgres://postgres:postgres@localhost:5432/agenda_db"
+          }
+        ]
+    services:
+      # Label used to access the service container
+      postgres:
+        # Docker Hub image
+        image: ${{ matrix.database.dialect }}
+        # Provide the password for postgres
+        env:
+          POSTGRES_PASSWORD: postgres
+        # Set health checks to wait until postgres has started
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          # Maps tcp port 5432 on service container to the host
+          - 5432:5432
     steps:
       - name: Git checkout
         uses: actions/checkout@v2
@@ -17,10 +39,10 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
 
-      - name: Start MongoDB
-        uses: supercharge/mongodb-github-action@1.6.0
-        with:
-          mongodb-version: ${{ matrix.mongodb-version }}
+      # - name: Start MongoDB
+      #   uses: supercharge/mongodb-github-action@1.6.0
+      #   with:
+      #     mongodb-version: ${{ matrix.mongodb-version }}
 
       - name: Cache node modules
         uses: actions/cache@v2
@@ -51,3 +73,5 @@ jobs:
         run: npm run test
         env:
           CI: true
+          CI_DB_DIALECT: ${{ matrix.database.dialect }}
+          CI_DB_ADDRESS: ${{ matrix.database.address }}

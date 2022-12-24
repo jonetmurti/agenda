@@ -1,24 +1,24 @@
 /* eslint-disable no-console,no-unused-expressions,@typescript-eslint/no-unused-expressions */
 
 import * as delay from 'delay';
-import { Db } from 'mongodb';
 import { expect } from 'chai';
-import { mockMongo } from './helpers/mock-mongodb';
 
 import { Agenda } from '../src';
-import { hasMongoProtocol } from '../src/utils/hasMongoProtocol';
 import { Job } from '../src/Job';
+import { Op, Sequelize } from 'sequelize';
+import { JobModel } from '../src/sequelize/models/job';
+import { mockSql } from './helpers/mock-sql';
 
 // agenda instances
 let globalAgenda: Agenda;
-// connection string to mongodb
-let mongoCfg: string;
-// mongo db connection db instance
-let mongoDb: Db;
+// sql connection
+let sequelize: Sequelize;
 
 const clearJobs = async (): Promise<void> => {
-	if (mongoDb) {
-		await mongoDb.collection('agendaJobs').deleteMany({});
+	if (sequelize) {
+		await JobModel.destroy({
+			where: {}
+		});
 	}
 };
 
@@ -29,16 +29,15 @@ const jobProcessor = () => {};
 
 describe('Agenda', () => {
 	beforeEach(async () => {
-		if (!mongoDb) {
-			const mockedMongo = await mockMongo();
-			mongoCfg = mockedMongo.uri;
-			mongoDb = mockedMongo.mongo.db();
+		if (!sequelize) {
+			const mockedSql = await mockSql();
+			sequelize = mockedSql.sequelize;
 		}
 
 		return new Promise(resolve => {
 			globalAgenda = new Agenda(
 				{
-					mongo: mongoDb
+					sequelize
 				},
 				async () => {
 					await delay(50);
@@ -69,35 +68,36 @@ describe('Agenda', () => {
 
 	describe('configuration methods', () => {
 		it('sets the _db directly when passed as an option', () => {
-			const agendaDb = new Agenda({ mongo: mongoDb });
+			const agendaDb = new Agenda({ sequelize });
 			expect(agendaDb.db).to.not.equal(undefined);
 		});
 	});
 
 	describe('configuration methods', () => {
-		describe('mongo connection tester', () => {
-			it('passing a valid server connection string', () => {
-				expect(hasMongoProtocol(mongoCfg)).to.equal(true);
-			});
+		// describe('mongo connection tester', () => {
+		// 	it('passing a valid server connection string', () => {
+		// 		expect(hasMongoProtocol(mongoCfg)).to.equal(true);
+		// 	});
 
-			it('passing a valid multiple server connection string', () => {
-				expect(hasMongoProtocol(`mongodb+srv://localhost/agenda-test`)).to.equal(true);
-			});
+		// 	it('passing a valid multiple server connection string', () => {
+		// 		expect(hasMongoProtocol(`mongodb+srv://localhost/agenda-test`)).to.equal(true);
+		// 	});
 
-			it('passing an invalid connection string', () => {
-				expect(hasMongoProtocol(`localhost/agenda-test`)).to.equal(false);
-			});
-		});
-		describe('mongo', () => {
+		// 	it('passing an invalid connection string', () => {
+		// 		expect(hasMongoProtocol(`localhost/agenda-test`)).to.equal(false);
+		// 	});
+		// });
+
+		describe('sql', () => {
 			it('sets the _db directly', () => {
 				const agenda = new Agenda();
-				agenda.mongo(mongoDb);
+				agenda.sql(sequelize);
 				expect(agenda.db).to.not.equal(undefined);
 			});
 
 			it('returns itself', async () => {
 				const agenda = new Agenda();
-				expect(await agenda.mongo(mongoDb)).to.equal(agenda);
+				expect(await agenda.sql(sequelize)).to.equal(agenda);
 			});
 		});
 
@@ -171,11 +171,11 @@ describe('Agenda', () => {
 		});
 		describe('sort', () => {
 			it('returns itself', () => {
-				expect(globalAgenda.sort({ nextRunAt: 1, priority: -1 })).to.equal(globalAgenda);
+				expect(globalAgenda.sort([['nextRunAt', 'ASC'], ['priority', 'DESC']])).to.equal(globalAgenda);
 			});
 			it('sets the default sort option', () => {
-				globalAgenda.sort({ nextRunAt: -1 });
-				expect(globalAgenda.attrs.sort).to.eql({ nextRunAt: -1 });
+				globalAgenda.sort([['nextRunAt', 'DESC']]);
+				expect(globalAgenda.attrs.sort).to.eql([['nextRunAt', 'DESC']]);
 			});
 		});
 	});
@@ -258,7 +258,11 @@ describe('Agenda', () => {
 					const jobName = 'send email';
 					await globalAgenda.every('5 minutes', jobName, {}, { skipImmediate: true });
 					const job = (await globalAgenda.jobs({ name: jobName }))[0];
-					const nextRunAt = job.attrs.nextRunAt!.getTime();
+					let nextRunAt: Date | number = job.attrs.nextRunAt!;
+					if (typeof nextRunAt === 'string') {
+						nextRunAt = new Date(nextRunAt);
+					}
+					nextRunAt = nextRunAt.getTime();
 					const now = new Date().getTime();
 					expect(nextRunAt - now > 0).to.equal(true);
 				});
@@ -266,7 +270,11 @@ describe('Agenda', () => {
 					const jobName = 'send email';
 					await globalAgenda.every('5 minutes', jobName, {}, { skipImmediate: false });
 					const job = (await globalAgenda.jobs({ name: jobName }))[0];
-					const nextRunAt = job.attrs.nextRunAt!.getTime();
+					let nextRunAt: Date | number = job.attrs.nextRunAt!;
+					if (typeof nextRunAt === 'string') {
+						nextRunAt = new Date(nextRunAt);
+					}
+					nextRunAt = nextRunAt.getTime();
 					const now = new Date().getTime();
 					expect(nextRunAt - now <= 0).to.equal(true);
 				});
@@ -337,18 +345,13 @@ describe('Agenda', () => {
 						job2.attrs.nextRunAt!.toISOString()
 					);
 
-					mongoDb
-						.collection('agendaJobs')
-						.find({
+					const jobs = await JobModel.findAll({
+						where: {
 							name: 'unique job'
-						})
-						.toArray((err, jobs) => {
-							if (err) {
-								throw err;
-							}
+						}
+					});
 
-							expect(jobs).to.have.length(1);
-						});
+					expect(jobs).to.have.length(1);
 				});
 
 				it('should not modify job when unique matches and insertOnly is set to true', async () => {
@@ -390,18 +393,13 @@ describe('Agenda', () => {
 
 					expect(job1.attrs.nextRunAt!.toISOString()).to.equal(job2.attrs.nextRunAt!.toISOString());
 
-					mongoDb
-						.collection('agendaJobs')
-						.find({
+					const jobs = await JobModel.findAll({
+						where: {
 							name: 'unique job'
-						})
-						.toArray((err, jobs) => {
-							if (err) {
-								throw err;
-							}
+						}
+					});
 
-							expect(jobs).to.have.length(1);
-						});
+					expect(jobs).to.have.length(1);
 				});
 			});
 
@@ -438,18 +436,13 @@ describe('Agenda', () => {
 						.schedule(time)
 						.save();
 
-					mongoDb
-						.collection('agendaJobs')
-						.find({
-							name: 'unique job'
-						})
-						.toArray((err, jobs) => {
-							if (err) {
-								throw err;
+						const jobs = await JobModel.findAll({
+							where: {
+								name: 'unique job'
 							}
-
-							expect(jobs).to.have.length(2);
 						});
+	
+						expect(jobs).to.have.length(2);
 				});
 			});
 		});
@@ -525,13 +518,13 @@ describe('Agenda', () => {
 			};
 
 			await globalAgenda.create('jobA').save().then(checkDone);
-			await globalAgenda.create('jobA', 'someData').save().then(checkDone);
+			await globalAgenda.create('jobA', { data: 1 }).save().then(checkDone);
 			await globalAgenda.create('jobB').save().then(checkDone);
 			expect(remaining).to.equal(0);
 		});
 
 		afterEach(async () => {
-			await globalAgenda.db.removeJobs({ name: { $in: ['jobA', 'jobB'] } });
+			await globalAgenda.db.removeJobs({ name: { [Op.in]: ['jobA', 'jobB'] } });
 		});
 
 		it('should cancel a job', async () => {
@@ -545,20 +538,20 @@ describe('Agenda', () => {
 		});
 
 		it('should cancel multiple jobs', async () => {
-			const jobs1 = await globalAgenda.jobs({ name: { $in: ['jobA', 'jobB'] } });
+			const jobs1 = await globalAgenda.jobs({ name: { [Op.in]: ['jobA', 'jobB'] } });
 			expect(jobs1).to.have.length(3);
-			await globalAgenda.cancel({ name: { $in: ['jobA', 'jobB'] } });
+			await globalAgenda.cancel({ name: { [Op.in]: ['jobA', 'jobB'] } });
 
-			const jobs2 = await globalAgenda.jobs({ name: { $in: ['jobA', 'jobB'] } });
+			const jobs2 = await globalAgenda.jobs({ name: { [Op.in]: ['jobA', 'jobB'] } });
 			expect(jobs2).to.have.length(0);
 		});
 
 		it('should cancel jobs only if the data matches', async () => {
-			const jobs1 = await globalAgenda.jobs({ name: 'jobA', data: 'someData' });
+			const jobs1 = await globalAgenda.jobs({ name: 'jobA', data: { data: 1 } });
 			expect(jobs1).to.have.length(1);
-			await globalAgenda.cancel({ name: 'jobA', data: 'someData' });
+			await globalAgenda.cancel({ name: 'jobA', data: { data: 1 } });
 
-			const jobs2 = await globalAgenda.jobs({ name: 'jobA', data: 'someData' });
+			const jobs2 = await globalAgenda.jobs({ name: 'jobA', data: { data: 1 } });
 			expect(jobs2).to.have.length(0);
 
 			const jobs3 = await globalAgenda.jobs({ name: 'jobA' });
@@ -568,9 +561,9 @@ describe('Agenda', () => {
 
 	describe('search', () => {
 		beforeEach(async () => {
-			await globalAgenda.create('jobA', 1).save();
-			await globalAgenda.create('jobA', 2).save();
-			await globalAgenda.create('jobA', 3).save();
+			await globalAgenda.create('jobA', { number: 1 }).save();
+			await globalAgenda.create('jobA', { number: 2 }).save();
+			await globalAgenda.create('jobA', { number: 3 }).save();
 		});
 
 		afterEach(async () => {
@@ -578,17 +571,17 @@ describe('Agenda', () => {
 		});
 
 		it('should limit jobs', async () => {
-			const results = await globalAgenda.jobs({ name: 'jobA' }, {}, 2);
+			const results = await globalAgenda.jobs({ name: 'jobA' }, [], 2);
 			expect(results).to.have.length(2);
 		});
 
 		it('should skip jobs', async () => {
-			const results = await globalAgenda.jobs({ name: 'jobA' }, {}, 2, 2);
+			const results = await globalAgenda.jobs({ name: 'jobA' }, [], 2, 2);
 			expect(results).to.have.length(1);
 		});
 
 		it('should sort jobs', async () => {
-			const results = await globalAgenda.jobs({ name: 'jobA' }, { data: -1 });
+			const results = await globalAgenda.jobs({ name: 'jobA' }, [['data.number', 'DESC']]);
 
 			expect(results).to.have.length(3);
 
@@ -596,60 +589,61 @@ describe('Agenda', () => {
 			const job2 = results[1];
 			const job3 = results[2];
 
-			expect(job1.attrs.data).to.equal(3);
-			expect(job2.attrs.data).to.equal(2);
-			expect(job3.attrs.data).to.equal(1);
+			expect(job1.attrs.data).to.eql({ number: 3 });
+			expect(job2.attrs.data).to.eql({ number: 2 });
+			expect(job3.attrs.data).to.eql({ number: 1 });
 		});
 	});
 
-	describe('ensureIndex findAndLockNextJobIndex', () => {
-		it('ensureIndex-Option false does not create index findAndLockNextJobIndex', async () => {
-			const agenda = new Agenda({
-				mongo: mongoDb,
-				ensureIndex: false
-			});
+	// TODO: implement this in SQL
+	// describe('ensureIndex findAndLockNextJobIndex', () => {
+	// 	it('ensureIndex-Option false does not create index findAndLockNextJobIndex', async () => {
+	// 		const agenda = new Agenda({
+	// 			mongo: mongoDb,
+	// 			ensureIndex: false
+	// 		});
 
-			agenda.define('someJob', jobProcessor);
-			await agenda.create('someJob', 1).save();
+	// 		agenda.define('someJob', jobProcessor);
+	// 		await agenda.create('someJob', 1).save();
 
-			const listIndex = await mongoDb.command({ listIndexes: 'agendaJobs' });
-			expect(listIndex.cursor.firstBatch).to.have.lengthOf(1);
-			expect(listIndex.cursor.firstBatch[0].name).to.be.equal('_id_');
-		});
+	// 		const listIndex = await mongoDb.command({ listIndexes: 'agendaJobs' });
+	// 		expect(listIndex.cursor.firstBatch).to.have.lengthOf(1);
+	// 		expect(listIndex.cursor.firstBatch[0].name).to.be.equal('_id_');
+	// 	});
 
-		it('ensureIndex-Option true does create index findAndLockNextJobIndex', async () => {
-			const agenda = new Agenda({
-				mongo: mongoDb,
-				ensureIndex: true
-			});
+	// 	it('ensureIndex-Option true does create index findAndLockNextJobIndex', async () => {
+	// 		const agenda = new Agenda({
+	// 			mongo: mongoDb,
+	// 			ensureIndex: true
+	// 		});
 
-			agenda.define('someJob', jobProcessor);
-			await agenda.create('someJob', 1).save();
+	// 		agenda.define('someJob', jobProcessor);
+	// 		await agenda.create('someJob', 1).save();
 
-			const listIndex = await mongoDb.command({ listIndexes: 'agendaJobs' });
-			expect(listIndex.cursor.firstBatch).to.have.lengthOf(2);
-			expect(listIndex.cursor.firstBatch[0].name).to.be.equal('_id_');
-			expect(listIndex.cursor.firstBatch[1].name).to.be.equal('findAndLockNextJobIndex');
-		});
+	// 		const listIndex = await mongoDb.command({ listIndexes: 'agendaJobs' });
+	// 		expect(listIndex.cursor.firstBatch).to.have.lengthOf(2);
+	// 		expect(listIndex.cursor.firstBatch[0].name).to.be.equal('_id_');
+	// 		expect(listIndex.cursor.firstBatch[1].name).to.be.equal('findAndLockNextJobIndex');
+	// 	});
 
-		it('creating two agenda-instances with ensureIndex-Option true does not throw an error', async () => {
-			const agenda = new Agenda({
-				mongo: mongoDb,
-				ensureIndex: true
-			});
+	// 	it('creating two agenda-instances with ensureIndex-Option true does not throw an error', async () => {
+	// 		const agenda = new Agenda({
+	// 			mongo: mongoDb,
+	// 			ensureIndex: true
+	// 		});
 
-			agenda.define('someJob', jobProcessor);
-			await agenda.create('someJob', 1).save();
+	// 		agenda.define('someJob', jobProcessor);
+	// 		await agenda.create('someJob', 1).save();
 
-			const secondAgenda = new Agenda({
-				mongo: mongoDb,
-				ensureIndex: true
-			});
+	// 		const secondAgenda = new Agenda({
+	// 			mongo: mongoDb,
+	// 			ensureIndex: true
+	// 		});
 
-			secondAgenda.define('someJob', jobProcessor);
-			await secondAgenda.create('someJob', 1).save();
-		});
-	});
+	// 		secondAgenda.define('someJob', jobProcessor);
+	// 		await secondAgenda.create('someJob', 1).save();
+	// 	});
+	// });
 
 	describe('process jobs', () => {
 		// eslint-disable-line prefer-arrow-callback

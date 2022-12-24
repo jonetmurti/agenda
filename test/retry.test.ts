@@ -1,18 +1,20 @@
 /* eslint-disable no-console */
-import { Db } from 'mongodb';
 import * as delay from 'delay';
-import { mockMongo } from './helpers/mock-mongodb';
-
 import { Agenda } from '../src';
+import type { Sequelize } from 'sequelize';
+import { JobModel } from '../src/sequelize/models/job';
+import { mockSql } from './helpers/mock-sql';
 
-// agenda instances
+// Create agenda instances
 let agenda: Agenda;
-// mongo db connection db instance
-let mongoDb: Db;
+// SQL connection
+let sequelize: Sequelize;
 
 const clearJobs = async (): Promise<void> => {
-	if (mongoDb) {
-		await mongoDb.collection('agendaJobs').deleteMany({});
+	if (sequelize) {
+		await JobModel.destroy({
+			where: {}
+		});
 	}
 };
 
@@ -21,15 +23,15 @@ const jobProcessor = () => { };
 
 describe('Retry', () => {
 	beforeEach(async () => {
-		if (!mongoDb) {
-			const mockedMongo = await mockMongo();
-			mongoDb = mockedMongo.mongo.db();
+		if (!sequelize) {
+			const mockedSql = await mockSql();
+			sequelize = mockedSql.sequelize;
 		}
 
 		return new Promise(resolve => {
 			agenda = new Agenda(
 				{
-					mongo: mongoDb
+					sequelize
 				},
 				async () => {
 					await delay(50);
@@ -75,8 +77,8 @@ describe('Retry', () => {
 		});
 
 		const successPromise = new Promise(resolve => {
-      agenda.on('success:a job', resolve)
-    });
+			agenda.on('success:a job', resolve)
+		});
 
 		await agenda.now('a job');
 

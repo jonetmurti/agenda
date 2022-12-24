@@ -1,13 +1,19 @@
 import { Agenda } from '../../src';
 import addTests from './add-tests';
+import type { Dialect } from 'sequelize';
 
 const connStr = process.argv[2];
-const tests = process.argv.slice(3);
+const dialect = process.argv[3] as Dialect;
+const tests = process.argv.slice(4);
 
 const agenda = new Agenda(
 	{
 		db: {
-			address: connStr
+			address: connStr,
+			options: {
+				dialect,
+				logging: false
+			}
 		},
 		processEvery: 100
 	},

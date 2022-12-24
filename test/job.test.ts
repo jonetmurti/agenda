@@ -4,26 +4,31 @@ import * as cp from 'child_process';
 import { expect } from 'chai';
 import * as assert from 'node:assert';
 import { DateTime } from 'luxon';
-import { Db } from 'mongodb';
 
 import * as delay from 'delay';
 import * as sinon from 'sinon';
 import { fail } from 'assert';
 import { Job } from '../src/Job';
 import { Agenda } from '../src';
-import { mockMongo } from './helpers/mock-mongodb';
 import someJobDefinition from './fixtures/someJobDefinition';
+import type { Dialect, Sequelize } from 'sequelize';
+import { mockSql } from './helpers/mock-sql';
+import { JobModel } from '../src/sequelize/models/job';
 
 // Create agenda instances
 let agenda: Agenda;
-// connection string to mongodb
-let mongoCfg: string;
-// mongo db connection db instance
-let mongoDb: Db;
+// SQL connection
+let sequelize: Sequelize;
+// SQL address
+let sqlAddress: string;
+// SQL dialect
+let sqlDialect: Dialect;
 
-const clearJobs = async () => {
-	if (mongoDb) {
-		await mongoDb.collection('agendaJobs').deleteMany({});
+const clearJobs = async (): Promise<void> => {
+	if (sequelize) {
+		await JobModel.destroy({
+			where: {}
+		});
 	}
 };
 
@@ -34,16 +39,17 @@ const jobProcessor = () => {};
 
 describe('Job', () => {
 	beforeEach(async () => {
-		if (!mongoDb) {
-			const mockedMongo = await mockMongo();
-			mongoCfg = mockedMongo.uri;
-			mongoDb = mockedMongo.mongo.db();
+		if (!sequelize) {
+			const mockedSql = await mockSql();
+			sequelize = mockedSql.sequelize;
+			sqlAddress = mockedSql.address;
+			sqlDialect = mockedSql.dialect;
 		}
 
 		return new Promise(resolve => {
 			agenda = new Agenda(
 				{
-					mongo: mongoDb
+					sequelize
 				},
 				async () => {
 					await delay(50);
@@ -364,22 +370,20 @@ describe('Job', () => {
 				type: 'normal'
 			});
 			await job.save();
-			const resultSaved = await mongoDb
-				.collection('agendaJobs')
-				.find({
+			const resultSaved = await JobModel.findAll({
+				where: {
 					_id: job.attrs._id
-				})
-				.toArray();
+				}
+			});
 
 			expect(resultSaved).to.have.length(1);
 			await job.remove();
 
-			const resultDeleted = await mongoDb
-				.collection('agendaJobs')
-				.find({
+			const resultDeleted = await JobModel.findAll({
+				where: {
 					_id: job.attrs._id
-				})
-				.toArray();
+				}
+			});
 
 			expect(resultDeleted).to.have.length(0);
 		});
@@ -770,7 +774,7 @@ describe('Job', () => {
 			expect(jobStarted[0].lockedAt).to.not.equal(null);
 			await agenda.stop();
 			const job = await agenda.db.getJobs({ name: 'longRunningJob' });
-			expect(job[0].lockedAt).to.equal(undefined);
+			expect(job[0].lockedAt).to.equal(null);
 		});
 
 		describe('events', () => {
@@ -999,6 +1003,8 @@ describe('Job', () => {
 
 			await agenda.start();
 
+			await delay(200);
+
 			await Promise.all([agenda.now('lock job', { i: 1 }), agenda.now('lock job', { i: 2 })]);
 
 			// give it some time to get picked up
@@ -1018,6 +1024,8 @@ describe('Job', () => {
 
 			await agenda.start();
 
+			await delay(200);
+
 			await Promise.all([
 				agenda.now('lock job', { i: 1 }),
 				agenda.now('lock job5', { i: 2 }),
@@ -1035,6 +1043,8 @@ describe('Job', () => {
 			agenda.define('lock job', (_job, _cb) => {}, { lockLimit: 1 }); // eslint-disable-line no-unused-vars
 
 			await agenda.start();
+
+			await delay(200);
 
 			await Promise.all([agenda.now('lock job', { i: 1 }), agenda.now('lock job', { i: 2 })]);
 
@@ -1283,11 +1293,11 @@ describe('Job', () => {
 			}
 		});
 
-		it('should support custom sort option', () => {
-			const sort = { foo: 1 } as const;
-			const agendaSort = new Agenda({ sort });
-			expect(agendaSort.attrs.sort).to.eql(sort);
-		});
+		// it('should support custom sort option', () => {
+		// 	const sort = { foo: 1 } as const;
+		// 	const agendaSort = new Agenda({ sort });
+		// 	expect(agendaSort.attrs.sort).to.eql(sort);
+		// });
 	});
 
 	describe('every running', () => {
@@ -1313,8 +1323,7 @@ describe('Job', () => {
 
 			await agenda.start();
 
-			await agenda.jobs({ name: 'everyRunTest1' });
-			await delay(jobTimeout);
+			await delay(1500);
 			expect(counter).to.equal(2);
 
 			await agenda.stop();
@@ -1367,7 +1376,7 @@ describe('Job', () => {
 
 				const startService = () => {
 					const serverPath = path.join(__dirname, 'fixtures', 'agenda-instance.ts');
-					const n = cp.fork(serverPath, [mongoCfg, 'daily'], {
+					const n = cp.fork(serverPath, [sqlAddress, sqlDialect, 'daily'], {
 						execArgv: ['-r', 'ts-node/register']
 					});
 
@@ -1380,7 +1389,7 @@ describe('Job', () => {
 
 			it('Should properly run jobs when defined via an array', done => {
 				const serverPath = path.join(__dirname, 'fixtures', 'agenda-instance.ts');
-				const n = cp.fork(serverPath, [mongoCfg, 'daily-array'], {
+				const n = cp.fork(serverPath, [sqlAddress, sqlDialect, 'daily-array'], {
 					execArgv: ['-r', 'ts-node/register']
 				});
 
@@ -1463,7 +1472,7 @@ describe('Job', () => {
 
 				const startService = () => {
 					const serverPath = path.join(__dirname, 'fixtures', 'agenda-instance.ts');
-					const n = cp.fork(serverPath, [mongoCfg, 'define-future-job'], {
+					const n = cp.fork(serverPath, [sqlAddress, sqlDialect, 'define-future-job'], {
 						execArgv: ['-r', 'ts-node/register']
 					});
 
@@ -1489,7 +1498,7 @@ describe('Job', () => {
 
 				const startService = () => {
 					const serverPath = path.join(__dirname, 'fixtures', 'agenda-instance.ts');
-					const n = cp.fork(serverPath, [mongoCfg, 'define-past-due-job'], {
+					const n = cp.fork(serverPath, [sqlAddress, sqlDialect, 'define-past-due-job'], {
 						execArgv: ['-r', 'ts-node/register']
 					});
 
@@ -1502,7 +1511,7 @@ describe('Job', () => {
 
 			it('Should schedule using array of names', done => {
 				const serverPath = path.join(__dirname, 'fixtures', 'agenda-instance.ts');
-				const n = cp.fork(serverPath, [mongoCfg, 'schedule-array'], {
+				const n = cp.fork(serverPath, [sqlAddress, sqlDialect, 'schedule-array'], {
 					execArgv: ['-r', 'ts-node/register']
 				});
 
@@ -1554,7 +1563,7 @@ describe('Job', () => {
 				};
 
 				const serverPath = path.join(__dirname, 'fixtures', 'agenda-instance.ts');
-				const n = cp.fork(serverPath, [mongoCfg, 'now'], { execArgv: ['-r', 'ts-node/register'] });
+				const n = cp.fork(serverPath, [sqlAddress, sqlDialect, 'now'], { execArgv: ['-r', 'ts-node/register'] });
 
 				n.on('message', receiveMessage);
 				n.on('error', serviceError);
@@ -1566,7 +1575,7 @@ describe('Job', () => {
 				const runCount = {};
 
 				agenda.define('test-job', (job, cb) => {
-					const id = job.attrs._id!.toString();
+					const id = job.attrs._id!;
 
 					runCount[id] = runCount[id] ? runCount[id] + 1 : 1;
 					cb();
@@ -1659,11 +1668,11 @@ describe('Job', () => {
 	describe('job fork mode', () => {
 		it('runs a job in fork mode', async () => {
 			const agendaFork = new Agenda({
-				mongo: mongoDb,
+				sequelize,
 				forkHelper: {
 					path: './test/helpers/forkHelper.ts',
 					options: {
-						env: { DB_CONNECTION: mongoCfg },
+						env: { DB_CONNECTION: sqlAddress, DB_DIALECT: sqlDialect },
 						execArgv: ['-r', 'ts-node/register']
 					}
 				}
@@ -1682,7 +1691,7 @@ describe('Job', () => {
 				throw new Error('job not found');
 			}
 
-			expect(jobData.fork).to.be.eq(true);
+			expect(jobData.fork).to.be.oneOf([1, true]);
 
 			// initialize job definition (keep in a seperate file to have a easier fork mode implementation)
 			someJobDefinition(agendaFork);
@@ -1695,18 +1704,18 @@ describe('Job', () => {
 			} while (await job.isRunning());
 
 			const jobDataFinished = await agenda.db.getJobById(job.attrs._id as any);
-			expect(jobDataFinished?.lastFinishedAt).to.not.be.eq(undefined);
+			expect(jobDataFinished?.lastFinishedAt).to.not.be.eq(null);
 			expect(jobDataFinished?.failReason).to.be.eq(null);
 			expect(jobDataFinished?.failCount).to.be.eq(null);
 		});
 
 		it('runs a job in fork mode, but let it fail', async () => {
 			const agendaFork = new Agenda({
-				mongo: mongoDb,
+				sequelize,
 				forkHelper: {
 					path: './test/helpers/forkHelper.ts',
 					options: {
-						env: { DB_CONNECTION: mongoCfg },
+						env: { DB_CONNECTION: sqlAddress, DB_DIALECT: sqlDialect },
 						execArgv: ['-r', 'ts-node/register']
 					}
 				}
@@ -1725,7 +1734,7 @@ describe('Job', () => {
 				throw new Error('job not found');
 			}
 
-			expect(jobData.fork).to.be.eq(true);
+			expect(jobData.fork).to.be.oneOf([1, true]);
 
 			// initialize job definition (keep in a seperate file to have a easier fork mode implementation)
 			someJobDefinition(agendaFork);
@@ -1738,18 +1747,18 @@ describe('Job', () => {
 			} while (await job.isRunning());
 
 			const jobDataFinished = await agenda.db.getJobById(job.attrs._id as any);
-			expect(jobDataFinished?.lastFinishedAt).to.not.be.eq(undefined);
+			expect(jobDataFinished?.lastFinishedAt).to.not.be.eq(null);
 			expect(jobDataFinished?.failReason).to.not.be.eq(null);
 			expect(jobDataFinished?.failCount).to.be.eq(1);
 		});
 
 		it('runs a job in fork mode, but let it die', async () => {
 			const agendaFork = new Agenda({
-				mongo: mongoDb,
+				sequelize,
 				forkHelper: {
 					path: './test/helpers/forkHelper.ts',
 					options: {
-						env: { DB_CONNECTION: mongoCfg },
+						env: { DB_CONNECTION: sqlAddress, DB_DIALECT: sqlDialect },
 						execArgv: ['-r', 'ts-node/register']
 					}
 				}
@@ -1768,7 +1777,7 @@ describe('Job', () => {
 				throw new Error('job not found');
 			}
 
-			expect(jobData.fork).to.be.eq(true);
+			expect(jobData.fork).to.be.oneOf([1, true]);
 
 			// initialize job definition (keep in a seperate file to have a easier fork mode implementation)
 			someJobDefinition(agendaFork);
@@ -1781,7 +1790,7 @@ describe('Job', () => {
 			} while (await job.isRunning());
 
 			const jobDataFinished = await agenda.db.getJobById(job.attrs._id as any);
-			expect(jobDataFinished?.lastFinishedAt).to.not.be.eq(undefined);
+			expect(jobDataFinished?.lastFinishedAt).to.not.be.eq(null);
 			expect(jobDataFinished?.failReason).to.not.be.eq(null);
 			expect(jobDataFinished?.failCount).to.be.eq(1);
 		});
