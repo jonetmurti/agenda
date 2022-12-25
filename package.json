@@ -1,6 +1,6 @@
 {
-  "name": "@jonetmurti/agenda-sql",
-  "version": "2.0.0",
+  "name": "agenda-sql",
+  "version": "1.0.0",
   "description": "SQL-backed job scheduler for Node.js based on Agenda (currently tested on MySQL and PostgreSQL).",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
