@@ -1,7 +1,7 @@
 {
   "name": "agenda-sql",
-  "version": "1.0.0",
-  "description": "SQL backed job scheduler for Node.js based on Agenda (currently tested on MySQL and PostgreSQL).",
+  "version": "2.0.0",
+  "description": "SQL-backed job scheduler for Node.js based on Agenda (currently tested on MySQL and PostgreSQL).",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "publishConfig": {
@@ -45,7 +45,7 @@
     "scheduler",
     "runner"
   ],
-  "author": "Simon Tretter <simon.tretter@hokify.com>",
+  "author": "Jonet Wira M. <jonet.dev@gmail.com>",
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/hokify/agenda/issues"
