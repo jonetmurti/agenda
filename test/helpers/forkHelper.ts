@@ -1,3 +1,4 @@
+import type { Dialect } from 'sequelize';
 import { Agenda } from '../../src';
 
 process.on('message', message => {
@@ -20,7 +21,13 @@ process.on('message', message => {
 	// initialize Agenda in "forkedWorker" mode
 	const agenda = new Agenda({ name: `subworker-${name}`, forkedWorker: true });
 	// connect agenda (but do not start it)
-	await agenda.database(process.env.DB_CONNECTION!);
+	await agenda.database(
+		process.env.DB_CONNECTION!,
+		{
+			dialect: process.env.DB_DIALECT! as Dialect,
+			logging: false
+		}
+	);
 
 	if (!name || !jobId) {
 		throw new Error(`invalid parameters: ${JSON.stringify(process.argv)}`);

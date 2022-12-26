@@ -1,73 +1,38 @@
-# Agenda
-
-<p align="center">
-  <img src="https://cdn.jsdelivr.net/gh/agenda/agenda@master/agenda.svg" alt="Agenda" width="100" height="100">
-</p>
+# Agenda-SQL
 
 <p align="center">
   A light-weight job scheduling library for Node.js
 </p>
 
-This was originally a fork of agenda.js,
+Agenda-SQL is a fork of agenda.js v5.0.0,
 it differs from the original version in following points:
 
-- Complete rewrite in Typescript (fully typed!)
-- mongodb4 driver (supports mongodb 5.x)
-- Supports mongoDB sharding by name
-- touch() can have an optional progress parameter (0-100)
-- Bugfixes and improvements for locking & job processing (concurrency, lockLimit,..)
-- Breaking change: define() config paramter moved from 2nd position to 3rd
-- getRunningStats()
-- automatically waits for agenda to be connected before calling any database operations
-- uses a database abstraction layer behind the scene
-- does not create a database index by default, you can set `ensureIndex: true` when initializing Agenda
-  or run manually:
-
-```
-db.agendaJobs.ensureIndex({
-    "name" : 1,
-    "nextRunAt" : 1,
-    "priority" : -1,
-    "lockedAt" : 1,
-    "disabled" : 1
-}, "findAndLockNextJobIndex")
-```
-
-# Agenda offers
-
-- Minimal overhead. Agenda aims to keep its code base small.
-- Mongo backed persistence layer.
-- Promises based API.
-- Scheduling with configurable priority, concurrency, repeating and persistence of job results.
-- Scheduling via cron or human readable syntax.
-- Event backed job queue that you can hook into.
-- [Agenda-rest](https://github.com/agenda/agenda-rest): optional standalone REST API.
-- [Inversify-agenda](https://github.com/lautarobock/inversify-agenda) - Some utilities for the development of agenda workers with Inversify.
-- [Agendash](https://github.com/agenda/agendash): optional standalone web-interface.
+- Uses SQL as its persistence layer using Sequelize as its ORM
+- It is currently tested on PostgreSQL (12, 13, 14, 15) and MySQL (5.7, 8)
 
 ### Feature Comparison
 
 Since there are a few job queue solutions, here a table comparing them to help you use the one that
 better suits your needs.
 
-| Feature                    |      Bull       |   Bee    | Agenda |
-| :------------------------- | :-------------: | :------: | :----: |
-| Backend                    |      redis      |  redis   | mongo  |
-| Priorities                 |        ✓        |          |   ✓    |
-| Concurrency                |        ✓        |    ✓     |   ✓    |
-| Delayed jobs               |        ✓        |          |   ✓    |
-| Global events              |        ✓        |          |   ✓    |
-| Rate Limiter               |        ✓        |          |        |
-| Pause/Resume               |        ✓        |          |   ✓    |
-| Sandboxed worker           |        ✓        |          |   ✓    |
-| Repeatable jobs            |        ✓        |          |   ✓    |
-| Atomic ops                 |        ✓        |    ✓     |   ~    |
-| Persistence                |        ✓        |    ✓     |   ✓    |
-| UI                         |        ✓        |          |   ✓    |
-| REST API                   |                 |          |   ✓    |
-| Central (Scalable) Queue   |                 |          |   ✓    |
-| Supports long running jobs |                 |          |   ✓    |
-| Optimized for              | Jobs / Messages | Messages |  Jobs  |
+| Feature                    |      Bull       |   Bee    | Agenda-SQL |
+| :------------------------- | :-------------: | :------: | :--------: |
+| Backend                    |      redis      |  redis   |     SQL    |
+| Priorities                 |        ✓        |          |      ✓     |
+| Concurrency                |        ✓        |    ✓     |      ✓     |
+| Delayed jobs               |        ✓        |          |      ✓     |
+| Global events              |        ✓        |          |      ✓     |
+| Rate Limiter               |        ✓        |          |  	       |
+| Pause/Resume               |        ✓        |          |   	 ✓     |
+| Sandboxed worker           |        ✓        |          |   	 ✓     |
+| Repeatable jobs            |        ✓        |          |   	 ✓     |
+| Atomic ops                 |        ✓        |    ✓     |   	 ~     |
+| Persistence                |        ✓        |    ✓     |   	 ✓     |
+| UI                         |        ✓        |          |   	 ✓     |
+| REST API                   |                 |          |   	 ✓     |
+| Central (Scalable) Queue   |                 |          |   	 ✓     |
+| Supports long running jobs |                 |          |   	 ✓     |
+| Optimized for              | Jobs / Messages | Messages |    Jobs    |
 
 _Kudos for making the comparison chart goes to [Bull](https://www.npmjs.com/package/bull#feature-comparison) maintainers._
 
@@ -77,26 +42,27 @@ Install via NPM
 
     npm install @hokify/agenda
 
-You will also need a working [Mongo](https://www.mongodb.com/) database (v4+) to point it to.
+You will also need a working SQL database (MySQL or PostgreSQL).
 
 # Example Usage
 
 ```js
-const mongoConnectionString = 'mongodb://127.0.0.1/agenda';
+const sqlAddress = 'postgres://postgres:postgres@localhost:5432/agenda_db';
 
-const agenda = new Agenda({ db: { address: mongoConnectionString } });
-
-// Or override the default collection name:
-// const agenda = new Agenda({db: {address: mongoConnectionString, collection: 'jobCollectionName'}});
-
-// or pass additional connection options:
-// const agenda = new Agenda({db: {address: mongoConnectionString, collection: 'jobCollectionName', options: {ssl: true}}});
-
-// or pass in an existing mongodb-native MongoClient instance
-// const agenda = new Agenda({mongo: myMongoClient});
+const agenda = new Agenda(
+	{
+		db: {
+			address: sqlAddress,
+			options: {
+				dialect: 'postgres',
+				logging: false
+			}
+		}
+	}
+);
 
 agenda.define('delete old users', async job => {
-	await User.remove({ lastLogIn: { $lt: twoDaysAgo } });
+	// Implement job handler here
 });
 
 (async function () {
@@ -141,10 +107,8 @@ agenda.define(
 
 # Full documentation
 
-See also https://hokify.github.io/agenda/
-
 Agenda's basic control structure is an instance of an agenda. Agenda's are
-mapped to a database collection and load the jobs from within.
+mapped to a database and load the jobs from within.
 
 ## Table of Contents
 
@@ -187,13 +151,13 @@ Possible agenda config options:
 	lockLimit: number;
 	defaultLockLifetime: number;
 	ensureIndex: boolean;
-	sort: SortOptionObject<IJobParameters>;
+	enableMigration: boolean;
+	sort: Order;
 	db: {
-		collection: string;
 		address: string;
-		options: MongoClientOptions;
+		options: Options;
 	}
-	mongo: Db;
+	sequelize: Sequelize;
 }
 ```
 
@@ -210,41 +174,45 @@ agenda.processEvery('3 days and 4 hours');
 agenda.processEvery('3 days, 4 hours and 36 seconds');
 ```
 
-### database(url, [collectionName], [MongoClientOptions])
+### database(url, Options)
 
-Specifies the database at the `url` specified. If no collection name is given,
-`agendaJobs` is used.
-
-By default `useNewUrlParser` and `useUnifiedTopology` is set to `true`,
+Specifies the database at the `url` specified.
 
 ```js
-agenda.database('localhost:27017/agenda-test', 'agendaJobs');
+agenda.database('postgres://postgres:postgres@localhost:5432/agenda_db', { dialect: 'postgres' });
 ```
 
 You can also specify it during instantiation.
 
 ```js
-const agenda = new Agenda({
-	db: { address: 'localhost:27017/agenda-test', collection: 'agendaJobs' }
-});
+const sqlAddress = 'postgres://postgres:postgres@localhost:5432/agenda_db';
+
+const agenda = new Agenda(
+	{
+		db: {
+			address: sqlAddress,
+			options: {
+				dialect: 'postgres'
+			}
+		}
+	}
+);
 ```
 
 Agenda will emit a `ready` event (see [Agenda Events](#agenda-events)) when properly connected to the database.
 It is safe to call `agenda.start()` without waiting for this event, as this is handled internally.
 If you're using the `db` options, or call `database`, then you may still need to listen for `ready` before saving jobs.
 
-### mongo(dbInstance, [collectionName])
+### sql(sequelizeInstance)
 
-Use an existing mongodb-native MongoClient/Db instance. This can help consolidate connections to a
+Use an existing Sequelize instance. This can help consolidate connections to a
 database. You can instead use `.database` to have agenda handle connecting for you.
 
 You can also specify it during instantiation:
 
 ```js
-const agenda = new Agenda({ mongo: mongoClientInstance.db('agenda-test') });
+const agenda = new Agenda({ sequelize: sequelizeInstance });
 ```
-
-Note that MongoClient.connect() returns a mongoClientInstance since [node-mongodb-native 3.0.0](https://github.com/mongodb/node-mongodb-native/blob/master/CHANGES_3.0.0.md), while it used to return a dbInstance that could then be directly passed to agenda.
 
 ### name(name)
 
@@ -276,7 +244,7 @@ being stored in memory.
 
 Also worth noting is that if the job queue is shutdown, any jobs stored in memory
 that haven't run will still be locked, meaning that you may have to wait for the
-lock to expire. By default it is `'5 seconds'`.
+lock to expire. By default, processInterval is `'5 seconds'`.
 
 ```js
 agenda.processEvery('1 minute');
@@ -370,23 +338,16 @@ const agenda = new Agenda({ defaultLockLifetime: 10000 });
 
 Takes a `query` which specifies the sort query to be used for finding and locking the next job.
 
-By default it is `{ nextRunAt: 1, priority: -1 }`, which obeys a first in first out approach, with respect to priority.
-
-### disableAutoIndex(boolean)
-
-Optional. Disables the automatic creation of the default index on the jobs table.
-By default, Agenda creates an index to optimize its queries against Mongo while processing jobs.
-
-This is useful if you want to use your own index in specific use-cases.
+By default it is `[['nextRunAt', 'ASC'], ['priority', 'DESC']]`, which obeys a first in first out approach, with respect to priority.
 
 ## Agenda Events
 
 An instance of an agenda will emit the following events:
 
-- `ready` - called when Agenda mongo connection is successfully opened and indices created.
+- `ready` - called when Agenda database connection is successfully opened and indices created.
   If you're passing agenda an existing connection, you shouldn't need to listen for this, as `agenda.start()` will not resolve until indices have been created.
   If you're using the `db` options, or call `database`, then you may still need to listen for the `ready` event before saving jobs. `agenda.start()` will still wait for the connection to be opened.
-- `error` - called when Agenda mongo connection process has thrown an error
+- `error` - called when Agenda database connection process has thrown an error
 
 ```js
 await agenda.start();
@@ -552,18 +513,18 @@ console.log('Job successfully saved');
 
 ## Managing Jobs
 
-### jobs(mongodb-native query, mongodb-native sort, mongodb-native limit, mongodb-native skip)
+### jobs(query, sort, limit, skip)
 
-Lets you query (then sort, limit and skip the result) all of the jobs in the agenda job's database. These are full [mongodb-native](https://github.com/mongodb/node-mongodb-native) `find`, `sort`, `limit` and `skip` commands. See mongodb-native's documentation for details.
+Lets you query (then sort, limit and skip the result) all of the jobs in the agenda job's database. For more information about Sequelize, `query`, `order`/`sort`, `limit`, and `offset`/`skip`, see [Sequelize queries](https://sequelize.org/docs/v6/core-concepts/model-querying-basics/).
 
 ```js
 const jobs = await agenda.jobs({ name: 'printAnalyticsReport' }, { data: -1 }, 3, 1);
 // Work with jobs (see below)
 ```
 
-### cancel(mongodb-native query)
+### cancel(query)
 
-Cancels any jobs matching the passed mongodb-native query, and removes them from the database. Returns a Promise resolving to the number of cancelled jobs, or rejecting on error.
+Cancels any jobs matching the passed sequelize "where" query, and removes them from the database. Returns a Promise resolving to the number of cancelled jobs, or rejecting on error.
 
 ```js
 const numRemoved = await agenda.cancel({ name: 'printAnalyticsReport' });
@@ -571,9 +532,9 @@ const numRemoved = await agenda.cancel({ name: 'printAnalyticsReport' });
 
 This functionality can also be achieved by first retrieving all the jobs from the database using `agenda.jobs()`, looping through the resulting array and calling `job.remove()` on each. It is however preferable to use `agenda.cancel()` for this use case, as this ensures the operation is atomic.
 
-### disable(mongodb-native query)
+### disable(query)
 
-Disables any jobs matching the passed mongodb-native query, preventing any matching jobs from being run by the Job Processor.
+Disables any jobs matching the passed sequelize "where" query, preventing any matching jobs from being run by the Job Processor.
 
 ```js
 const numDisabled = await agenda.disable({ name: 'pollExternalService' });
@@ -581,9 +542,9 @@ const numDisabled = await agenda.disable({ name: 'pollExternalService' });
 
 Similar to `agenda.cancel()`, this functionality can be acheived with a combination of `agenda.jobs()` and `job.disable()`
 
-### enable(mongodb-native query)
+### enable(query)
 
-Enables any jobs matching the passed mongodb-native query, allowing any matching jobs to be run by the Job Processor.
+Enables any jobs matching the passed sequelize "where" query, allowing any matching jobs to be run by the Job Processor.
 
 ```js
 const numEnabled = await agenda.enable({ name: 'pollExternalService' });
@@ -754,8 +715,6 @@ job.unique({ 'data.type': 'active', 'data.userId': '123', nextRunAt: date });
 await job.save();
 ```
 
-_IMPORTANT:_ To avoid high CPU usage by MongoDB, make sure to create an index on the used fields, like `data.type` and `data.userId` for the example above.
-
 ### fail(reason)
 
 Sets `job.attrs.failedAt` to `now`, and sets `job.attrs.failReason` to `reason`.
@@ -871,136 +830,6 @@ agenda.on('fail:send email', (err, job) => {
 });
 ```
 
-## Frequently Asked Questions
-
-### What is the order in which jobs run?
-
-Jobs are run with priority in a first in first out order (so they will be run in the order they were scheduled AND with respect to highest priority).
-
-For example, if we have two jobs named "send-email" queued (both with the same priority), and the first job is queued at 3:00 PM and second job is queued at 3:05 PM with the same `priority` value, then the first job will run first if we start to send "send-email" jobs at 3:10 PM. However if the first job has a priority of `5` and the second job has a priority of `10`, then the second will run first (priority takes precedence) at 3:10 PM.
-
-The default [MongoDB sort object](https://docs.mongodb.com/manual/reference/method/cursor.sort/) is `{ nextRunAt: 1, priority: -1 }` and can be changed through the option `sort` when configuring Agenda.
-
-### What is the difference between `lockLimit` and `maxConcurrency`?
-
-Agenda will lock jobs 1 by one, setting the `lockedAt` property in mongoDB, and creating an instance of the `Job` class which it caches into the `_lockedJobs` array. This defaults to having no limit, but can be managed using lockLimit. If all jobs will need to be run before agenda's next interval (set via `agenda.processEvery`), then agenda will attempt to lock all jobs.
-
-Agenda will also pull jobs from `_lockedJobs` and into `_runningJobs`. These jobs are actively being worked on by user code, and this is limited by `maxConcurrency` (defaults to 20).
-
-If you have multiple instances of agenda processing the same job definition with a fast repeat time you may find they get unevenly loaded. This is because they will compete to lock as many jobs as possible, even if they don't have enough concurrency to process them. This can be resolved by tweaking the `maxConcurrency` and `lockLimit` properties.
-
-### Sample Project Structure?
-
-Agenda doesn't have a preferred project structure and leaves it to the user to
-choose how they would like to use it. That being said, you can check out the
-[example project structure](#example-project-structure) below.
-
-### Can I Donate?
-
-Thanks! I'm flattered, but it's really not necessary. If you really want to, you can find my [gittip here](https://www.gittip.com/rschmukler/).
-
-### Web Interface?
-
-Agenda itself does not have a web interface built in but we do offer stand-alone web interface [Agendash](https://github.com/agenda/agendash):
-
-<a href="https://raw.githubusercontent.com/agenda/agendash/master/job-details.png"><img src="https://raw.githubusercontent.com/agenda/agendash/master/job-details.png" style="max-width:100%" alt="Agendash interface"></a>
-
-### Mongo vs Redis
-
-The decision to use Mongo instead of Redis is intentional. Redis is often used for
-non-essential data (such as sessions) and without configuration doesn't
-guarantee the same level of persistence as Mongo (should the server need to be
-restarted/crash).
-
-Agenda decides to focus on persistence without requiring special configuration
-of Redis (thereby degrading the performance of the Redis server on non-critical
-data, such as sessions).
-
-Ultimately if enough people want a Redis driver instead of Mongo, I will write
-one. (Please open an issue requesting it). For now, Agenda decided to focus on
-guaranteed persistence.
-
-### Spawning / forking processes
-
-Ultimately Agenda can work from a single job queue across multiple machines, node processes, or forks. If you are interested in having more than one worker, [Bars3s](http://github.com/bars3s) has written up a fantastic example of how one might do it:
-
-```js
-const cluster = require('cluster');
-const os = require('os');
-
-const httpServer = require('./app/http-server');
-const jobWorker = require('./app/job-worker');
-
-const jobWorkers = [];
-const webWorkers = [];
-
-if (cluster.isMaster) {
-	const cpuCount = os.cpus().length;
-	// Create a worker for each CPU
-	for (let i = 0; i < cpuCount; i += 1) {
-		addJobWorker();
-		addWebWorker();
-	}
-
-	cluster.on('exit', (worker, code, signal) => {
-		if (jobWorkers.indexOf(worker.id) !== -1) {
-			console.log(
-				`job worker ${worker.process.pid} exited (signal: ${signal}). Trying to respawn...`
-			);
-			removeJobWorker(worker.id);
-			addJobWorker();
-		}
-
-		if (webWorkers.indexOf(worker.id) !== -1) {
-			console.log(
-				`http worker ${worker.process.pid} exited (signal: ${signal}). Trying to respawn...`
-			);
-			removeWebWorker(worker.id);
-			addWebWorker();
-		}
-	});
-} else {
-	if (process.env.web) {
-		console.log(`start http server: ${cluster.worker.id}`);
-		// Initialize the http server here
-		httpServer.start();
-	}
-
-	if (process.env.job) {
-		console.log(`start job server: ${cluster.worker.id}`);
-		// Initialize the Agenda here
-		jobWorker.start();
-	}
-}
-
-function addWebWorker() {
-	webWorkers.push(cluster.fork({ web: 1 }).id);
-}
-
-function addJobWorker() {
-	jobWorkers.push(cluster.fork({ job: 1 }).id);
-}
-
-function removeWebWorker(id) {
-	webWorkers.splice(webWorkers.indexOf(id), 1);
-}
-
-function removeJobWorker(id) {
-	jobWorkers.splice(jobWorkers.indexOf(id), 1);
-}
-```
-
-### Recovering lost Mongo connections ("auto_reconnect")
-
-Agenda is configured by default to automatically reconnect indefinitely, emitting an [error event](#agenda-events)
-when no connection is available on each [process tick](#processeveryinterval), allowing you to restore the Mongo
-instance without having to restart the application.
-
-However, if you are using an [existing Mongo client](#mongomongoclientinstance)
-you'll need to configure the `reconnectTries` and `reconnectInterval` [connection settings](http://mongodb.github.io/node-mongodb-native/3.0/reference/connecting/connection-settings/)
-manually, otherwise you'll find that Agenda will throw an error with the message "MongoDB connection is not recoverable,
-application restart required" if the connection cannot be recovered within 30 seconds.
-
 # Example Project Structure
 
 Agenda will only process jobs that it has definitions for. This allows you to
@@ -1051,9 +880,18 @@ lib/agenda.js
 ```js
 const Agenda = require('agenda');
 
-const connectionOpts = { db: { address: 'localhost:27017/agenda-test', collection: 'agendaJobs' } };
+const sqlAddress = 'postgres://postgres:postgres@localhost:5432/agenda_db';
 
-const agenda = new Agenda(connectionOpts);
+const agenda = new Agenda(
+	{
+		db: {
+			address: sqlAddress,
+			options: {
+				dialect: 'postgres'
+			}
+		}
+	}
+);
 
 const jobTypes = process.env.JOB_TYPES ? process.env.JOB_TYPES.split(',') : [];
 
@@ -1120,20 +958,6 @@ JOB_TYPES=video-processing,image-processing node worker.js
 
 Fire up an instance that processes video-processing/image-processing jobs. Good for a heavy hitting server.
 
-# Debugging Issues
-
-If you think you have encountered a bug, please feel free to report it here:
-
-[Submit Issue](https://github.com/hokify/agenda/issues/new)
-
-Please provide us with as much details as possible such as:
-
-- Agenda version
-- Environment (OSX, Linux, Windows, etc)
-- Small description of what happened
-- Any relevant stack track
-- Agenda logs (see below)
-
 #### To turn on logging, please set your DEBUG env variable like so:
 
 - OSX: `DEBUG="agenda:*" ts-node src/index.ts`
@@ -1143,35 +967,6 @@ Please provide us with as much details as possible such as:
 
 While not necessary, attaching a text file with this debug information would
 be extremely useful in debugging certain issues and is encouraged.
-
-# Known Issues
-
-#### "Multiple order-by items are not supported. Please specify a single order-by item."
-
-When running Agenda on Azure cosmosDB, you might run into this issue caused by Agenda's sort query used for finding and locking the next job. To fix this, you can pass [custom sort option](#sortquery): `sort: { nextRunAt: 1 }`
-
-# Performance
-
-It is recommended to set this index if you use agendash:
-
-```
-db.agendaJobs.ensureIndex({
-    "nextRunAt" : -1,
-    "lastRunAt" : -1,
-    "lastFinishedAt" : -1
-}, "agendash2")
-```
-
-If you have one job definition with thousand of instances, you can add this index to improve internal sorting query
-for faster sortings
-
-```
-db.agendaJobs.ensureIndex({
-    "name" : 1,
-    "disabled" : 1,
-    "lockedAt" : 1
-}, "findAndLockDeadJobs")
-```
 
 # Sandboxed Worker - use child processes
 
@@ -1201,7 +996,7 @@ process.on('message', message => {
 });
 
 (async () => {
-	const mongooseConnection = /** connect to database */
+	const sequelize = /** connect to database */
 
   /** do other required initializations */
 
@@ -1214,7 +1009,7 @@ process.on('message', message => {
   // initialize Agenda in "forkedWorker" mode
 	const agenda = new Agenda({ name: `subworker-${name}`, forkedWorker: true });
 	// connect agenda (but do not start it)
-	await agenda.mongo(mongooseConnection.db as any);
+	await agenda.sql(sequelize);
 
 	if (!name || !jobId) {
 		throw new Error(`invalid parameters: ${JSON.stringify(process.argv)}`);

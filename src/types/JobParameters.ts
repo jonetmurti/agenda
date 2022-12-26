@@ -1,9 +1,8 @@
-import { Filter, ObjectId } from 'mongodb';
 import { WhereOptions, InferAttributes } from 'sequelize';
 import { JobModel } from '../sequelize/models/job';
 
 export interface IJobParameters<DATA = unknown | void> {
-	_id?: ObjectId | string;
+	_id?: string;
 
 	name: string;
 	priority: number;
@@ -28,7 +27,7 @@ export interface IJobParameters<DATA = unknown | void> {
 	progress?: number;
 
 	// unique query object
-	unique?: Filter<Omit<IJobParameters<DATA>, 'unique'>> | WhereOptions<InferAttributes<JobModel>>;
+	unique?: WhereOptions<InferAttributes<JobModel>>;
 	uniqueOpts?: {
 		insertOnly: boolean;
 	};

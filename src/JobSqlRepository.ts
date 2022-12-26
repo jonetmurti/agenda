@@ -1,12 +1,18 @@
 import * as debug from 'debug';
-import { Agenda } from './index';
+import {
+	Sequelize,
+	WhereOptions,
+	InferAttributes,
+	Op,
+	Order,
+	OptimisticLockError
+} from 'sequelize';
 import type { Job, JobWithId } from './Job';
+import type { Agenda } from './index';
 import type { ISqlConfig, ISqlConnection, ISqlOptions } from './types/DbOptions';
-import { IJobParameters } from './types/JobParameters';
-import { Sequelize, WhereOptions, InferAttributes, Op, Order } from 'sequelize';
+import type { IJobParameters } from './types/JobParameters';
+import { Migration } from './sequelize/migrations';
 import { initModel, JobModel } from './sequelize/models/job';
-import { Umzug, SequelizeStorage } from 'umzug';
-import * as path from 'path';
 
 const log = debug('agenda:sql');
 
@@ -14,39 +20,17 @@ const log = debug('agenda:sql');
  * @class
  */
 export class JobSqlRepository {
-    private sequelize: Sequelize;
+	private sequelize: Sequelize;
 
-    constructor(
+	constructor(
 		private agenda: Agenda,
 		private connectOptions: (ISqlOptions | ISqlConnection) & ISqlConfig
 	) {
 		this.connectOptions.sort = this.connectOptions.sort || [
 			['nextRunAt', 'ASC'],
-			['priority', 'DESC'],
+			['priority', 'DESC']
 		];
 		log('JobSqlRepository created');
-	}
-
-	private async migrate(ensureIndex?: boolean): Promise<void> {
-		const umzug = new Umzug({
-			migrations: {
-				glob: path.join(__dirname, './sequelize/migrations/*.js'),
-				resolve: ({ name, path, context }) => {
-					const migration = require(path || '');
-					return {
-						name,
-						up: async () => migration.up(context, Sequelize, ensureIndex),
-					}
-				},
-			},
-			context: this.sequelize.getQueryInterface(),
-			storage: new SequelizeStorage({
-				sequelize: this.sequelize,
-				tableName: 'sequelize_meta',
-			}),
-			logger: undefined,
-		});
-		await umzug.up();
 	}
 
 	private async createConnection(): Promise<Sequelize> {
@@ -63,10 +47,7 @@ export class JobSqlRepository {
 			if (connectOptions.db.options.dialect === 'sqlite') {
 				sequelize = new Sequelize(connectOptions.db.options);
 			} else if (connectOptions.db.address) {
-				sequelize = new Sequelize(
-					connectOptions.db.address,
-					connectOptions.db.options,
-				)
+				sequelize = new Sequelize(connectOptions.db.address, connectOptions.db.options);
 			}
 
 			if (sequelize !== undefined) {
@@ -80,7 +61,7 @@ export class JobSqlRepository {
 	}
 
 	private hasSqlConnection(connectOptions: unknown): connectOptions is ISqlConnection {
-		return  !!(connectOptions as ISqlConnection)?.sequelize;
+		return !!(connectOptions as ISqlConnection)?.sequelize;
 	}
 
 	private hasSqlOptions(connectOptions: unknown): connectOptions is ISqlOptions {
@@ -95,12 +76,10 @@ export class JobSqlRepository {
 		log('connect:', 'creating connection');
 		this.sequelize = await this.createConnection();
 
-		if (
-			this.connectOptions.enableMigration ||
-			this.connectOptions.enableMigration === undefined
-		) {
+		if (this.connectOptions.enableMigration) {
 			log('connect:', 'migrating db');
-			await this.migrate(this.connectOptions.ensureIndex);
+			const migration = new Migration(this.sequelize, this.connectOptions.ensureIndex);
+			await migration.migrate();
 		}
 
 		log('connect:', 'initialize sequelize model');
@@ -128,14 +107,14 @@ export class JobSqlRepository {
 			where: query,
 			order: sort,
 			limit,
-			offset: skip,
+			offset: skip
 		});
 		return jobs as IJobParameters[];
 	}
 
 	async removeJobs(query: WhereOptions<InferAttributes<JobModel>>): Promise<number> {
 		const result = await JobModel.destroy({
-			where: query,
+			where: query
 		});
 		return result;
 	}
@@ -144,70 +123,82 @@ export class JobSqlRepository {
 		return JobModel.count({
 			where: {
 				nextRunAt: {
-					[Op.lt]: new Date(),
-				},
-			},
+					[Op.lt]: new Date()
+				}
+			}
 		});
 	}
 
 	async unlockJob(job: Job): Promise<void> {
 		// TODO: check if id always exist?
-		await JobModel.update({
-			lockedAt: null,
-		}, {
-			where: {
-				_id: job.attrs._id as string,
-				nextRunAt: {
-					[Op.ne]: null,
-				},
+		await JobModel.update(
+			{
+				lockedAt: null
 			},
-			limit: 1,
-		});
+			{
+				where: {
+					_id: job.attrs._id as string,
+					nextRunAt: {
+						[Op.ne]: null
+					}
+				},
+				limit: 1
+			}
+		);
 	}
 
 	async unlockJobs(jobIds: string[]): Promise<void> {
-		await JobModel.update({
-			lockedAt: null
-		}, {
-			where: {
-				_id: {
-					[Op.in]: jobIds,
-				},
-				nextRunAt: {
-					[Op.ne]: null,
-				},
+		await JobModel.update(
+			{
+				lockedAt: null
+			},
+			{
+				where: {
+					_id: {
+						[Op.in]: jobIds
+					},
+					nextRunAt: {
+						[Op.ne]: null
+					}
+				}
 			}
-		});
+		);
 	}
 
-	// test below
 	async lockJob(job: JobWithId): Promise<IJobParameters | undefined> {
-		const row = await this.sequelize.transaction(async t => {
-			const row = await JobModel.findOne({
-				where: {
-					_id: job.attrs._id as string,
-					name: job.attrs.name,
-					lockedAt: {
-						[Op.is]: null,
+		try {
+			const result = await this.sequelize.transaction(async t => {
+				const row = await JobModel.findOne({
+					where: {
+						_id: job.attrs._id as string,
+						name: job.attrs.name,
+						lockedAt: {
+							[Op.is]: null
+						},
+						nextRunAt: job.attrs.nextRunAt, // TODO: anticipate null
+						disabled: {
+							[Op.ne]: true
+						}
 					},
-					nextRunAt: job.attrs.nextRunAt, // TODO: anticipate null
-					disabled: {
-						[Op.ne]: true,
-					},
-				},
-				order: this.connectOptions.sort,
-				transaction: t,
+					order: this.connectOptions.sort,
+					transaction: t
+				});
+
+				if (row) {
+					row.lockedAt = new Date();
+					await row.save({ transaction: t });
+				}
+
+				return row;
 			});
 
-			if (row) {
-				row.lockedAt = new Date();
-				await row.save({ transaction: t });
+			return (result?.toJSON() as IJobParameters) || undefined;
+		} catch (err) {
+			if (!(err instanceof OptimisticLockError)) {
+				throw err;
 			}
-
-			return row;
-		});
-
-		return row?.toJSON() as IJobParameters || undefined;
+		}
+		return undefined;
 	}
 
 	async getNextJobToRun(
@@ -216,42 +207,49 @@ export class JobSqlRepository {
 		lockDeadline: Date,
 		now: Date = new Date()
 	): Promise<IJobParameters | undefined> {
-		const row = await this.sequelize.transaction(async t => {
-			const row = await JobModel.findOne({
-				where: {
-					name: jobName,
-					disabled: {
-						[Op.ne]: true,
+		try {
+			const result = await this.sequelize.transaction(async t => {
+				const row = await JobModel.findOne({
+					where: {
+						name: jobName,
+						disabled: {
+							[Op.ne]: true
+						},
+						[Op.or]: [
+							{
+								lockedAt: {
+									[Op.eq]: null
+								},
+								nextRunAt: {
+									[Op.lte]: nextScanAt
+								}
+							},
+							{
+								lockedAt: {
+									[Op.lte]: lockDeadline
+								}
+							}
+						]
 					},
-					[Op.or]: [
-						{
-							lockedAt: {
-								[Op.is]: null,
-							},
-							nextRunAt: {
-								[Op.lte]: nextScanAt,
-							},
-						},
-						{
-							lockedAt: {
-								[Op.lte]: lockDeadline,
-							},
-						},
-					],
-				},
-				order: this.connectOptions.sort,
-				transaction: t,
+					order: this.connectOptions.sort,
+					transaction: t
+				});
+
+				if (row) {
+					row.lockedAt = now;
+					await row.save({ transaction: t });
+				}
+
+				return row;
 			});
-		
-			if (row) {
-				row.lockedAt = now;
-				await row.save({ transaction: t });
+
+			return (result?.toJSON() as IJobParameters) || undefined;
+		} catch (err) {
+			if (!(err instanceof OptimisticLockError)) {
+				throw err;
 			}
-
-			return row;
-		});
-
-		return row?.toJSON() as IJobParameters || undefined;
+		}
+		return undefined;
 	}
 
 	private processDbResult<DATA = unknown | void>(
@@ -287,8 +285,8 @@ export class JobSqlRepository {
 			progress: job.attrs.progress || null,
 			failReason: job.attrs.failReason || null,
 			failCount: job.attrs.failCount,
-			failedAt: job.attrs.failedAt && new Date(job.attrs.failedAt) || null,
-			lastFinishedAt: (job.attrs.lastFinishedAt && new Date(job.attrs.lastFinishedAt)) || null,
+			failedAt: (job.attrs.failedAt && new Date(job.attrs.failedAt)) || null,
+			lastFinishedAt: (job.attrs.lastFinishedAt && new Date(job.attrs.lastFinishedAt)) || null
 		};
 
 		log('[job %s] save job state: \n%O', id, set);
@@ -296,8 +294,8 @@ export class JobSqlRepository {
 		const result = await JobModel.update(set, {
 			where: {
 				_id: id,
-				name: job.attrs.name,
-			},
+				name: job.attrs.name
+			}
 		});
 
 		if (result[0] !== 1) {
@@ -315,22 +313,23 @@ export class JobSqlRepository {
 
 			const { _id, unique, uniqueOpts, ...props } = {
 				...job.toJson(),
-				lastModifiedBy: this.agenda.attrs.name,
+				lastModifiedBy: this.agenda.attrs.name
 			};
 
-			log('[job %s] set job props: \n%O', id, props);
+			log(_id, unique, uniqueOpts);
 
+			log('[job %s] set job props: \n%O', id, props);
 
 			const now = new Date();
 
 			if (id) {
-				const row = await this.sequelize.transaction(async t => {
+				const result = await this.sequelize.transaction(async t => {
 					const row = await JobModel.findOne({
 						where: {
 							_id: id,
-							name: props.name,
+							name: props.name
 						},
-						transaction: t,
+						transaction: t
 					});
 					if (row) {
 						row.set(props);
@@ -339,20 +338,20 @@ export class JobSqlRepository {
 
 					return row;
 				});
-				return this.processDbResult(job, row?.toJSON() as IJobParameters<DATA>);
+				return this.processDbResult(job, result?.toJSON() as IJobParameters<DATA>);
 			}
 
 			if (props.type === 'single') {
 				log('job with type of "single" found');
-				const row = await this.sequelize.transaction(async t => {
+				const result = await this.sequelize.transaction(async t => {
 					let row = await JobModel.findOne({
 						where: {
 							name: props.name,
-							type: 'single',
+							type: 'single'
 						},
-						transaction: t,
+						transaction: t
 					});
-	
+
 					if (row) {
 						if (props.nextRunAt && props.nextRunAt <= now) {
 							log('job has a scheduled nextRunAt time, protecting that field from upsert');
@@ -367,20 +366,20 @@ export class JobSqlRepository {
 					return row;
 				});
 
-				return this.processDbResult(job, row?.toJSON() as IJobParameters<DATA>);
+				return this.processDbResult(job, result?.toJSON() as IJobParameters<DATA>);
 			}
 
 			if (job.attrs.unique) {
-				const query = job.attrs.unique as  WhereOptions<InferAttributes<JobModel>>;
-				const row = await this.sequelize.transaction(async t => {
+				const query = job.attrs.unique as WhereOptions<InferAttributes<JobModel>>;
+				const result = await this.sequelize.transaction(async t => {
 					let row = await JobModel.findOne({
 						where: {
 							...query,
-							name: props.name,
+							name: props.name
 						},
-						transaction: t,
+						transaction: t
 					});
-	
+
 					if (row && !job.attrs.uniqueOpts?.insertOnly) {
 						row.set(props);
 						await row.save({ transaction: t });
@@ -390,18 +389,18 @@ export class JobSqlRepository {
 
 					return row;
 				});
-	
-				return this.processDbResult(job, row?.toJSON() as IJobParameters<DATA>);
+
+				return this.processDbResult(job, result?.toJSON() as IJobParameters<DATA>);
 			}
 
 			log(
 				'using default behavior, inserting new job via create() with props that were set: \n%O',
 				props
 			);
-			const row = await JobModel.create(props);
+			const result = await JobModel.create(props);
 			return this.processDbResult(job, {
-				_id: row._id,
-				...props,
+				_id: result._id,
+				...props
 			} as IJobParameters<DATA>);
 		} catch (error) {
 			log('processDbResult() received an error, job was not updated/created');

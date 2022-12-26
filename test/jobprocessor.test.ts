@@ -2,18 +2,21 @@
 import { fail } from 'assert';
 import { expect } from 'chai';
 
-import { Db } from 'mongodb';
 import { Agenda } from '../src';
-import { mockMongo } from './helpers/mock-mongodb';
+import type { Sequelize } from 'sequelize';
+import { mockSql } from './helpers/mock-sql';
+import { JobModel } from '../src/sequelize/models/job';
 
 // Create agenda instances
 let agenda: Agenda;
-// mongo db connection db instance
-let mongoDb: Db;
+// SQL connection
+let sequelize: Sequelize;
 
 const clearJobs = async () => {
-	if (mongoDb) {
-		await mongoDb.collection('agendaJobs').deleteMany({});
+	if (sequelize) {
+		await JobModel.destroy({
+			where: {}
+		});
 	}
 };
 
@@ -21,16 +24,15 @@ describe('JobProcessor', () => {
 	// this.timeout(1000000);
 
 	beforeEach(async () => {
-		if (!mongoDb) {
-			const mockedMongo = await mockMongo();
-			// mongoCfg = mockedMongo.uri;
-			mongoDb = mockedMongo.mongo.db();
+		if (!sequelize) {
+			const mockedSql = await mockSql();
+			sequelize = mockedSql.sequelize;
 		}
 
 		return new Promise(resolve => {
 			agenda = new Agenda(
 				{
-					mongo: mongoDb,
+					sequelize,
 					maxConcurrency: 4,
 					defaultConcurrency: 1,
 					lockLimit: 15,
@@ -261,7 +263,7 @@ describe('JobProcessor', () => {
 				await new Promise(wait => {
 					setTimeout(wait, 50);
 				});
-			} while (runningJobs < 90); // @todo Why not 100?
+			} while (runningJobs < 100); // @todo Why not 100?
 			resolve('all started');
 		});
 
@@ -271,7 +273,7 @@ describe('JobProcessor', () => {
 				new Promise(resolve => {
 					setTimeout(
 						() => resolve(`not all jobs started, currently running: ${runningJobs}`),
-						1500
+						2000
 					);
 				})
 			])
