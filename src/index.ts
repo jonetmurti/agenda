@@ -410,6 +410,110 @@ export class Agenda extends EventEmitter {
 	 * @param data
 	 * @param options
 	 */
+	async repeat(
+		interval: string | number,
+		names: string[],
+		data?: undefined,
+		options?: {
+			unique?: IJobParameters<void>['unique'];
+			uniqueOpts?: IJobParameters['uniqueOpts'];
+			timezone?: string;
+			skipImmediate?: boolean;
+			forkMode?: boolean;
+		}
+	): Promise<Job<void>[]>;
+	async repeat(
+		interval: string | number,
+		name: string,
+		data?: undefined,
+		options?: {
+			unique?: IJobParameters<void>['unique'];
+			uniqueOpts?: IJobParameters['uniqueOpts'];
+			timezone?: string;
+			skipImmediate?: boolean;
+			forkMode?: boolean;
+		}
+	): Promise<Job<void>>;
+	async repeat<DATA = unknown>(
+		interval: string | number,
+		names: string[],
+		data: DATA,
+		options?: {
+			unique?: IJobParameters<DATA>['unique'];
+			uniqueOpts?: IJobParameters['uniqueOpts'];
+			timezone?: string;
+			skipImmediate?: boolean;
+			forkMode?: boolean;
+		}
+	): Promise<Job<DATA>[]>;
+	async repeat<DATA = unknown>(
+		interval: string | number,
+		name: string,
+		data: DATA,
+		options?: {
+			unique?: IJobParameters<DATA>['unique'];
+			uniqueOpts?: IJobParameters['uniqueOpts'];
+			timezone?: string;
+			skipImmediate?: boolean;
+			forkMode?: boolean;
+		}
+	): Promise<Job<DATA>>;
+	async repeat(
+		interval: string | number,
+		names: string | string[],
+		data?: unknown,
+		options?: {
+			unique?: IJobParameters<any>['unique'];
+			uniqueOpts?: IJobParameters['uniqueOpts'];
+			timezone?: string;
+			skipImmediate?: boolean;
+			forkMode?: boolean;
+		}
+	): Promise<Job<any> | Job<any>[]> {
+		/**
+		 * Internal method to setup job that gets run every interval
+		 * @param {Number} interval run every X interval
+		 * @param {String} name String job to schedule
+		 * @param {Object} data data to run for job
+		 * @param {Object} options options to run job for
+		 * @returns {Job} instance of job
+		 */
+		log('Agenda.every(%s, %O, %O)', interval, names, options);
+
+		const createJob = async (name: string): Promise<Job> => {
+			const job = this.create(name, data);
+			job.repeatEvery(interval, options);
+			if (options?.unique) {
+				job.attrs.unique = options.unique;
+				job.attrs.uniqueOpts = options.uniqueOpts;
+			}
+			if (options?.forkMode) {
+				job.forkMode(options.forkMode);
+			}
+			await job.save();
+
+			return job;
+		};
+
+		if (typeof names === 'string') {
+			const job = await createJob(names);
+
+			return job;
+		}
+
+		log('Agenda.every(%s, %s, %O)', interval, names, options);
+		const jobs = await this.createJobs(names, createJob);
+
+		return jobs;
+	}
+
+	/**
+	 * Creates a scheduled job with given interval and name/names of the job to run
+	 * @param interval
+	 * @param names
+	 * @param data
+	 * @param options
+	 */
 	async every(
 		interval: string | number,
 		names: string[],

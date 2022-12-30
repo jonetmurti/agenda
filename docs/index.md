@@ -8,6 +8,7 @@ title: Agenda TS — Lightweight job scheduling for Node.js
 
 ## Documentation
 
+- [v1.1.0](./agenda-sql/1.1.0/)
 - [v1.x](./agenda-sql/1.x/)
 - [v6.x.0](./agenda/6.x) - latest
 - [v4.x.0](./agenda/4.x)

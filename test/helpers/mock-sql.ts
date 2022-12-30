@@ -1,9 +1,9 @@
-import * as debug from 'debug';
+// import * as debug from 'debug';
 import { Dialect, Sequelize } from 'sequelize';
 import { Migration } from '../../src/sequelize/migrations';
 import { initModel } from '../../src/sequelize/models/job';
 
-const log = debug('agenda:mock-sql');
+// const log = debug('agenda:mock-sql');
 
 export interface IMockSql {
 	disconnect: () => Promise<void>;

@@ -1,0 +1,781 @@
+<!DOCTYPE html><html class="default" lang="en"><head><meta charSet="utf-8"/><meta http-equiv="x-ua-compatible" content="IE=edge"/><title>agenda-sql</title><meta name="description" content="Documentation for agenda-sql"/><meta name="viewport" content="width=device-width, initial-scale=1"/><link rel="stylesheet" href="assets/style.css"/><link rel="stylesheet" href="assets/highlight.css"/><script async src="assets/search.js" id="search-script"></script></head><body><script>document.documentElement.dataset.theme = localStorage.getItem("tsd-theme") || "os"</script><header class="tsd-page-toolbar">
+<div class="tsd-toolbar-contents container">
+<div class="table-cell" id="tsd-search" data-base=".">
+<div class="field"><label for="tsd-search-field" class="tsd-widget search no-caption"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M15.7824 13.833L12.6666 10.7177C12.5259 10.5771 12.3353 10.499 12.1353 10.499H11.6259C12.4884 9.39596 13.001 8.00859 13.001 6.49937C13.001 2.90909 10.0914 0 6.50048 0C2.90959 0 0 2.90909 0 6.49937C0 10.0896 2.90959 12.9987 6.50048 12.9987C8.00996 12.9987 9.39756 12.4863 10.5008 11.6239V12.1332C10.5008 12.3332 10.5789 12.5238 10.7195 12.6644L13.8354 15.7797C14.1292 16.0734 14.6042 16.0734 14.8948 15.7797L15.7793 14.8954C16.0731 14.6017 16.0731 14.1267 15.7824 13.833ZM6.50048 10.499C4.29094 10.499 2.50018 8.71165 2.50018 6.49937C2.50018 4.29021 4.28781 2.49976 6.50048 2.49976C8.71001 2.49976 10.5008 4.28708 10.5008 6.49937C10.5008 8.70852 8.71314 10.499 6.50048 10.499Z" fill="var(--color-text)"></path></svg></label><input type="text" id="tsd-search-field" aria-label="Search"/></div>
+<ul class="results">
+<li class="state loading">Preparing search index...</li>
+<li class="state failure">The search index is not available</li></ul><a href="index.html" class="title">agenda-sql</a></div>
+<div class="table-cell" id="tsd-widgets"><a href="#" class="tsd-widget menu no-caption" data-toggle="menu" aria-label="Menu"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><rect x="1" y="3" width="14" height="2" fill="var(--color-text)"></rect><rect x="1" y="7" width="14" height="2" fill="var(--color-text)"></rect><rect x="1" y="11" width="14" height="2" fill="var(--color-text)"></rect></svg></a></div></div></header>
+<div class="container container-main">
+<div class="col-8 col-content">
+<div class="tsd-page-title">
+<h2>agenda-sql</h2></div>
+<div class="tsd-panel tsd-typography">
+<a href="#agenda-sql" id="agenda-sql" style="color: inherit; text-decoration: none;">
+  <h1>Agenda-SQL</h1>
+</a>
+<p align="center">
+  A light-weight job scheduling library for Node.js
+</p>
+
+<p>Agenda-SQL is a fork of agenda.js v5.0.0,
+it differs from the original version in following points:</p>
+<ul>
+<li>Uses SQL as its persistence layer using Sequelize as its ORM</li>
+<li>It is currently tested on PostgreSQL (12, 13, 14, 15) and MySQL (5.7, 8)</li>
+</ul>
+
+<a href="#feature-comparison" id="feature-comparison" style="color: inherit; text-decoration: none;">
+  <h3>Feature Comparison</h3>
+</a>
+<p>Since there are a few job queue solutions, here a table comparing them to help you use the one that
+better suits your needs.</p>
+<table>
+<thead>
+<tr>
+<th align="left">Feature</th>
+<th align="center">Bull</th>
+<th align="center">Bee</th>
+<th align="center">Agenda-SQL</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left">Backend</td>
+<td align="center">redis</td>
+<td align="center">redis</td>
+<td align="center">SQL</td>
+</tr>
+<tr>
+<td align="left">Priorities</td>
+<td align="center">✓</td>
+<td align="center"></td>
+<td align="center">✓</td>
+</tr>
+<tr>
+<td align="left">Concurrency</td>
+<td align="center">✓</td>
+<td align="center">✓</td>
+<td align="center">✓</td>
+</tr>
+<tr>
+<td align="left">Delayed jobs</td>
+<td align="center">✓</td>
+<td align="center"></td>
+<td align="center">✓</td>
+</tr>
+<tr>
+<td align="left">Global events</td>
+<td align="center">✓</td>
+<td align="center"></td>
+<td align="center">✓</td>
+</tr>
+<tr>
+<td align="left">Rate Limiter</td>
+<td align="center">✓</td>
+<td align="center"></td>
+<td align="center"></td>
+</tr>
+<tr>
+<td align="left">Pause/Resume</td>
+<td align="center">✓</td>
+<td align="center"></td>
+<td align="center">✓</td>
+</tr>
+<tr>
+<td align="left">Sandboxed worker</td>
+<td align="center">✓</td>
+<td align="center"></td>
+<td align="center">✓</td>
+</tr>
+<tr>
+<td align="left">Repeatable jobs</td>
+<td align="center">✓</td>
+<td align="center"></td>
+<td align="center">✓</td>
+</tr>
+<tr>
+<td align="left">Atomic ops</td>
+<td align="center">✓</td>
+<td align="center">✓</td>
+<td align="center">~</td>
+</tr>
+<tr>
+<td align="left">Persistence</td>
+<td align="center">✓</td>
+<td align="center">✓</td>
+<td align="center">✓</td>
+</tr>
+<tr>
+<td align="left">UI</td>
+<td align="center">✓</td>
+<td align="center"></td>
+<td align="center">✓</td>
+</tr>
+<tr>
+<td align="left">REST API</td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center">✓</td>
+</tr>
+<tr>
+<td align="left">Central (Scalable) Queue</td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center">✓</td>
+</tr>
+<tr>
+<td align="left">Supports long running jobs</td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center">✓</td>
+</tr>
+<tr>
+<td align="left">Optimized for</td>
+<td align="center">Jobs / Messages</td>
+<td align="center">Messages</td>
+<td align="center">Jobs</td>
+</tr>
+</tbody></table>
+<p><em>Kudos for making the comparison chart goes to <a href="https://www.npmjs.com/package/bull#feature-comparison">Bull</a> maintainers.</em></p>
+
+<a href="#installation" id="installation" style="color: inherit; text-decoration: none;">
+  <h1>Installation</h1>
+</a>
+<p>Install via NPM</p>
+<pre><code><span class="hl-0">npm</span><span class="hl-1"> </span><span class="hl-0">install</span><span class="hl-1"> @</span><span class="hl-0">hokify</span><span class="hl-1">/</span><span class="hl-0">agenda</span>
+</code></pre>
+<p>You will also need a working SQL database (MySQL or PostgreSQL).</p>
+
+<a href="#example-usage" id="example-usage" style="color: inherit; text-decoration: none;">
+  <h1>Example Usage</h1>
+</a>
+<pre><code class="language-js"><span class="hl-2">const</span><span class="hl-1"> </span><span class="hl-3">sqlAddress</span><span class="hl-1"> = </span><span class="hl-4">&#39;postgres://postgres:postgres@localhost:5432/agenda_db&#39;</span><span class="hl-1">;</span><br/><br/><span class="hl-2">const</span><span class="hl-1"> </span><span class="hl-3">agenda</span><span class="hl-1"> = </span><span class="hl-2">new</span><span class="hl-1"> </span><span class="hl-5">Agenda</span><span class="hl-1">(</span><br/><span class="hl-1">    {</span><br/><span class="hl-1">        </span><span class="hl-0">db:</span><span class="hl-1"> {</span><br/><span class="hl-1">            </span><span class="hl-0">address:</span><span class="hl-1"> </span><span class="hl-0">sqlAddress</span><span class="hl-1">,</span><br/><span class="hl-1">            </span><span class="hl-0">options:</span><span class="hl-1"> {</span><br/><span class="hl-1">                </span><span class="hl-0">dialect:</span><span class="hl-1"> </span><span class="hl-4">&#39;postgres&#39;</span><span class="hl-1">,</span><br/><span class="hl-1">                </span><span class="hl-0">logging:</span><span class="hl-1"> </span><span class="hl-2">false</span><br/><span class="hl-1">            }</span><br/><span class="hl-1">        }</span><br/><span class="hl-1">    }</span><br/><span class="hl-1">);</span><br/><br/><span class="hl-0">agenda</span><span class="hl-1">.</span><span class="hl-5">define</span><span class="hl-1">(</span><span class="hl-4">&#39;delete old users&#39;</span><span class="hl-1">, </span><span class="hl-2">async</span><span class="hl-1"> </span><span class="hl-0">job</span><span class="hl-1"> </span><span class="hl-2">=&gt;</span><span class="hl-1"> {</span><br/><span class="hl-1">    </span><span class="hl-6">// Implement job handler here</span><br/><span class="hl-1">});</span><br/><br/><span class="hl-1">(</span><span class="hl-2">async</span><span class="hl-1"> </span><span class="hl-2">function</span><span class="hl-1"> () {</span><br/><span class="hl-1">    </span><span class="hl-6">// IIFE to give access to async/await</span><br/><span class="hl-1">    </span><span class="hl-7">await</span><span class="hl-1"> </span><span class="hl-0">agenda</span><span class="hl-1">.</span><span class="hl-5">start</span><span class="hl-1">();</span><br/><br/><span class="hl-1">    </span><span class="hl-7">await</span><span class="hl-1"> </span><span class="hl-0">agenda</span><span class="hl-1">.</span><span class="hl-5">every</span><span class="hl-1">(</span><span class="hl-4">&#39;3 minutes&#39;</span><span class="hl-1">, </span><span class="hl-4">&#39;delete old users&#39;</span><span class="hl-1">);</span><br/><br/><span class="hl-1">    </span><span class="hl-6">// Alternatively, you could also do:</span><br/><span class="hl-1">    </span><span class="hl-7">await</span><span class="hl-1"> </span><span class="hl-0">agenda</span><span class="hl-1">.</span><span class="hl-5">every</span><span class="hl-1">(</span><span class="hl-4">&#39;*/3 * * * *&#39;</span><span class="hl-1">, </span><span class="hl-4">&#39;delete old users&#39;</span><span class="hl-1">);</span><br/><span class="hl-1">})();</span>
+</code></pre>
+<pre><code class="language-js"><span class="hl-0">agenda</span><span class="hl-1">.</span><span class="hl-5">define</span><span class="hl-1">(</span><br/><span class="hl-1">    </span><span class="hl-4">&#39;send email report&#39;</span><span class="hl-1">,</span><br/><span class="hl-1">    </span><span class="hl-2">async</span><span class="hl-1"> </span><span class="hl-0">job</span><span class="hl-1"> </span><span class="hl-2">=&gt;</span><span class="hl-1"> {</span><br/><span class="hl-1">        </span><span class="hl-2">const</span><span class="hl-1"> { </span><span class="hl-3">to</span><span class="hl-1"> } = </span><span class="hl-0">job</span><span class="hl-1">.</span><span class="hl-0">attrs</span><span class="hl-1">.</span><span class="hl-0">data</span><span class="hl-1">;</span><br/><span class="hl-1">        </span><span class="hl-7">await</span><span class="hl-1"> </span><span class="hl-0">emailClient</span><span class="hl-1">.</span><span class="hl-5">send</span><span class="hl-1">({</span><br/><span class="hl-1">            </span><span class="hl-0">to</span><span class="hl-1">,</span><br/><span class="hl-1">            </span><span class="hl-0">from:</span><span class="hl-1"> </span><span class="hl-4">&#39;example@example.com&#39;</span><span class="hl-1">,</span><br/><span class="hl-1">            </span><span class="hl-0">subject:</span><span class="hl-1"> </span><span class="hl-4">&#39;Email Report&#39;</span><span class="hl-1">,</span><br/><span class="hl-1">            </span><span class="hl-0">body:</span><span class="hl-1"> </span><span class="hl-4">&#39;...&#39;</span><br/><span class="hl-1">        });</span><br/><span class="hl-1">    },</span><br/><span class="hl-1">    { </span><span class="hl-0">priority:</span><span class="hl-1"> </span><span class="hl-4">&#39;high&#39;</span><span class="hl-1">, </span><span class="hl-0">concurrency:</span><span class="hl-1"> </span><span class="hl-8">10</span><span class="hl-1"> }</span><br/><span class="hl-1">);</span><br/><br/><span class="hl-1">(</span><span class="hl-2">async</span><span class="hl-1"> </span><span class="hl-2">function</span><span class="hl-1"> () {</span><br/><span class="hl-1">    </span><span class="hl-7">await</span><span class="hl-1"> </span><span class="hl-0">agenda</span><span class="hl-1">.</span><span class="hl-5">start</span><span class="hl-1">();</span><br/><span class="hl-1">    </span><span class="hl-7">await</span><span class="hl-1"> </span><span class="hl-0">agenda</span><span class="hl-1">.</span><span class="hl-5">schedule</span><span class="hl-1">(</span><span class="hl-4">&#39;in 20 minutes&#39;</span><span class="hl-1">, </span><span class="hl-4">&#39;send email report&#39;</span><span class="hl-1">, { </span><span class="hl-0">to:</span><span class="hl-1"> </span><span class="hl-4">&#39;admin@example.com&#39;</span><span class="hl-1"> });</span><br/><span class="hl-1">})();</span>
+</code></pre>
+<pre><code class="language-js"><span class="hl-1">(</span><span class="hl-2">async</span><span class="hl-1"> </span><span class="hl-2">function</span><span class="hl-1"> () {</span><br/><span class="hl-1">    </span><span class="hl-2">const</span><span class="hl-1"> </span><span class="hl-3">weeklyReport</span><span class="hl-1"> = </span><span class="hl-0">agenda</span><span class="hl-1">.</span><span class="hl-5">create</span><span class="hl-1">(</span><span class="hl-4">&#39;send email report&#39;</span><span class="hl-1">, { </span><span class="hl-0">to:</span><span class="hl-1"> </span><span class="hl-4">&#39;example@example.com&#39;</span><span class="hl-1"> });</span><br/><span class="hl-1">    </span><span class="hl-7">await</span><span class="hl-1"> </span><span class="hl-0">agenda</span><span class="hl-1">.</span><span class="hl-5">start</span><span class="hl-1">();</span><br/><span class="hl-1">    </span><span class="hl-7">await</span><span class="hl-1"> </span><span class="hl-0">weeklyReport</span><span class="hl-1">.</span><span class="hl-5">repeatEvery</span><span class="hl-1">(</span><span class="hl-4">&#39;1 week&#39;</span><span class="hl-1">).</span><span class="hl-5">save</span><span class="hl-1">();</span><br/><span class="hl-1">})();</span>
+</code></pre>
+
+<a href="#full-documentation" id="full-documentation" style="color: inherit; text-decoration: none;">
+  <h1>Full documentation</h1>
+</a>
+<p>Agenda&#39;s basic control structure is an instance of an agenda. Agenda&#39;s are
+mapped to a database and load the jobs from within.</p>
+
+<a href="#table-of-contents" id="table-of-contents" style="color: inherit; text-decoration: none;">
+  <h2>Table of Contents</h2>
+</a>
+<ul>
+<li><a href="#configuring-an-agenda">Configuring an agenda</a></li>
+<li><a href="#agenda-events">Agenda Events</a></li>
+<li><a href="#defining-job-processors">Defining job processors</a></li>
+<li><a href="#creating-jobs">Creating jobs</a></li>
+<li><a href="#managing-jobs">Managing jobs</a></li>
+<li><a href="#starting-the-job-processor">Starting the job processor</a></li>
+<li><a href="#multiple-job-processors">Multiple job processors</a></li>
+<li><a href="#manually-working-with-a-job">Manually working with jobs</a></li>
+<li><a href="#job-queue-events">Job Queue Events</a></li>
+<li><a href="#frequently-asked-questions">Frequently asked questions</a></li>
+<li><a href="#example-project-structure">Example Project structure</a></li>
+<li><a href="#known-issues">Known Issues</a></li>
+<li><a href="#debugging-issues">Debugging Issues</a></li>
+<li><a href="#acknowledgements">Acknowledgements</a></li>
+</ul>
+
+<a href="#configuring-an-agenda" id="configuring-an-agenda" style="color: inherit; text-decoration: none;">
+  <h2>Configuring an agenda</h2>
+</a>
+<p>All configuration methods are chainable, meaning you can do something like:</p>
+<pre><code class="language-js"><span class="hl-2">const</span><span class="hl-1"> </span><span class="hl-3">agenda</span><span class="hl-1"> = </span><span class="hl-2">new</span><span class="hl-1"> </span><span class="hl-5">Agenda</span><span class="hl-1">();</span><br/><span class="hl-0">agenda</span><br/><span class="hl-1">  .</span><span class="hl-5">database</span><span class="hl-1">(...)</span><br/><span class="hl-1">  .</span><span class="hl-5">processEvery</span><span class="hl-1">(</span><span class="hl-4">&#39;3 minutes&#39;</span><span class="hl-1">)</span><br/><span class="hl-1">  ...;</span>
+</code></pre>
+<p>Possible agenda config options:</p>
+<pre><code class="language-ts"><span class="hl-1">{</span><br/><span class="hl-1">    </span><span class="hl-9">name</span><span class="hl-1">: </span><span class="hl-0">string</span><span class="hl-1">;</span><br/><span class="hl-1">    </span><span class="hl-9">defaultConcurrency</span><span class="hl-1">: </span><span class="hl-0">number</span><span class="hl-1">;</span><br/><span class="hl-1">    </span><span class="hl-9">processEvery</span><span class="hl-1">: </span><span class="hl-0">number</span><span class="hl-1">;</span><br/><span class="hl-1">    </span><span class="hl-9">maxConcurrency</span><span class="hl-1">: </span><span class="hl-0">number</span><span class="hl-1">;</span><br/><span class="hl-1">    </span><span class="hl-9">defaultLockLimit</span><span class="hl-1">: </span><span class="hl-0">number</span><span class="hl-1">;</span><br/><span class="hl-1">    </span><span class="hl-9">lockLimit</span><span class="hl-1">: </span><span class="hl-0">number</span><span class="hl-1">;</span><br/><span class="hl-1">    </span><span class="hl-9">defaultLockLifetime</span><span class="hl-1">: </span><span class="hl-0">number</span><span class="hl-1">;</span><br/><span class="hl-1">    </span><span class="hl-9">ensureIndex</span><span class="hl-1">: </span><span class="hl-0">boolean</span><span class="hl-1">;</span><br/><span class="hl-1">    </span><span class="hl-9">enableMigration</span><span class="hl-1">: </span><span class="hl-0">boolean</span><span class="hl-1">;</span><br/><span class="hl-1">    </span><span class="hl-9">sort</span><span class="hl-1">: </span><span class="hl-0">Order</span><span class="hl-1">;</span><br/><span class="hl-1">    </span><span class="hl-9">db</span><span class="hl-1">: {</span><br/><span class="hl-1">        </span><span class="hl-9">address</span><span class="hl-1">: </span><span class="hl-0">string</span><span class="hl-1">;</span><br/><span class="hl-1">        </span><span class="hl-9">options</span><span class="hl-1">: </span><span class="hl-0">Options</span><span class="hl-1">;</span><br/><span class="hl-1">    }</span><br/><span class="hl-1">    </span><span class="hl-9">sequelize</span><span class="hl-1">: </span><span class="hl-0">Sequelize</span><span class="hl-1">;</span><br/><span class="hl-1">}</span>
+</code></pre>
+<p>Agenda uses <a href="http://github.com/rschmukler/human-interval">Human Interval</a> for specifying the intervals. It supports the following units:</p>
+<p><code>seconds</code>, <code>minutes</code>, <code>hours</code>, <code>days</code>,<code>weeks</code>, <code>months</code> -- assumes 30 days, <code>years</code> -- assumes 365 days</p>
+<p>More sophisticated examples</p>
+<pre><code class="language-js"><span class="hl-0">agenda</span><span class="hl-1">.</span><span class="hl-5">processEvery</span><span class="hl-1">(</span><span class="hl-4">&#39;one minute&#39;</span><span class="hl-1">);</span><br/><span class="hl-0">agenda</span><span class="hl-1">.</span><span class="hl-5">processEvery</span><span class="hl-1">(</span><span class="hl-4">&#39;1.5 minutes&#39;</span><span class="hl-1">);</span><br/><span class="hl-0">agenda</span><span class="hl-1">.</span><span class="hl-5">processEvery</span><span class="hl-1">(</span><span class="hl-4">&#39;3 days and 4 hours&#39;</span><span class="hl-1">);</span><br/><span class="hl-0">agenda</span><span class="hl-1">.</span><span class="hl-5">processEvery</span><span class="hl-1">(</span><span class="hl-4">&#39;3 days, 4 hours and 36 seconds&#39;</span><span class="hl-1">);</span>
+</code></pre>
+
+<a href="#databaseurl-options" id="databaseurl-options" style="color: inherit; text-decoration: none;">
+  <h3>database(url, Options)</h3>
+</a>
+<p>Specifies the database at the <code>url</code> specified.</p>
+<pre><code class="language-js"><span class="hl-0">agenda</span><span class="hl-1">.</span><span class="hl-5">database</span><span class="hl-1">(</span><span class="hl-4">&#39;postgres://postgres:postgres@localhost:5432/agenda_db&#39;</span><span class="hl-1">, { </span><span class="hl-0">dialect:</span><span class="hl-1"> </span><span class="hl-4">&#39;postgres&#39;</span><span class="hl-1"> });</span>
+</code></pre>
+<p>You can also specify it during instantiation.</p>
+<pre><code class="language-js"><span class="hl-2">const</span><span class="hl-1"> </span><span class="hl-3">sqlAddress</span><span class="hl-1"> = </span><span class="hl-4">&#39;postgres://postgres:postgres@localhost:5432/agenda_db&#39;</span><span class="hl-1">;</span><br/><br/><span class="hl-2">const</span><span class="hl-1"> </span><span class="hl-3">agenda</span><span class="hl-1"> = </span><span class="hl-2">new</span><span class="hl-1"> </span><span class="hl-5">Agenda</span><span class="hl-1">(</span><br/><span class="hl-1">    {</span><br/><span class="hl-1">        </span><span class="hl-0">db:</span><span class="hl-1"> {</span><br/><span class="hl-1">            </span><span class="hl-0">address:</span><span class="hl-1"> </span><span class="hl-0">sqlAddress</span><span class="hl-1">,</span><br/><span class="hl-1">            </span><span class="hl-0">options:</span><span class="hl-1"> {</span><br/><span class="hl-1">                </span><span class="hl-0">dialect:</span><span class="hl-1"> </span><span class="hl-4">&#39;postgres&#39;</span><br/><span class="hl-1">            }</span><br/><span class="hl-1">        }</span><br/><span class="hl-1">    }</span><br/><span class="hl-1">);</span>
+</code></pre>
+<p>Agenda will emit a <code>ready</code> event (see <a href="#agenda-events">Agenda Events</a>) when properly connected to the database.
+It is safe to call <code>agenda.start()</code> without waiting for this event, as this is handled internally.
+If you&#39;re using the <code>db</code> options, or call <code>database</code>, then you may still need to listen for <code>ready</code> before saving jobs.</p>
+
+<a href="#sqlsequelizeinstance" id="sqlsequelizeinstance" style="color: inherit; text-decoration: none;">
+  <h3>sql(sequelizeInstance)</h3>
+</a>
+<p>Use an existing Sequelize instance. This can help consolidate connections to a
+database. You can instead use <code>.database</code> to have agenda handle connecting for you.</p>
+<p>You can also specify it during instantiation:</p>
+<pre><code class="language-js"><span class="hl-2">const</span><span class="hl-1"> </span><span class="hl-3">agenda</span><span class="hl-1"> = </span><span class="hl-2">new</span><span class="hl-1"> </span><span class="hl-5">Agenda</span><span class="hl-1">({ </span><span class="hl-0">sequelize:</span><span class="hl-1"> </span><span class="hl-0">sequelizeInstance</span><span class="hl-1"> });</span>
+</code></pre>
+
+<a href="#namename" id="namename" style="color: inherit; text-decoration: none;">
+  <h3>name(name)</h3>
+</a>
+<p>Sets the <code>lastModifiedBy</code> field to <code>name</code> in the jobs collection.
+Useful if you have multiple job processors (agendas) and want to see which
+job queue last ran the job.</p>
+<pre><code class="language-js"><span class="hl-0">agenda</span><span class="hl-1">.</span><span class="hl-5">name</span><span class="hl-1">(</span><span class="hl-0">os</span><span class="hl-1">.</span><span class="hl-0">hostname</span><span class="hl-1"> + </span><span class="hl-4">&#39;-&#39;</span><span class="hl-1"> + </span><span class="hl-0">process</span><span class="hl-1">.</span><span class="hl-0">pid</span><span class="hl-1">);</span>
+</code></pre>
+<p>You can also specify it during instantiation</p>
+<pre><code class="language-js"><span class="hl-2">const</span><span class="hl-1"> </span><span class="hl-3">agenda</span><span class="hl-1"> = </span><span class="hl-2">new</span><span class="hl-1"> </span><span class="hl-5">Agenda</span><span class="hl-1">({ </span><span class="hl-0">name:</span><span class="hl-1"> </span><span class="hl-4">&#39;test queue&#39;</span><span class="hl-1"> });</span>
+</code></pre>
+
+<a href="#processeveryinterval" id="processeveryinterval" style="color: inherit; text-decoration: none;">
+  <h3>processEvery(interval)</h3>
+</a>
+<p>Takes a string <code>interval</code> which can be either a traditional javascript number,
+or a string such as <code>3 minutes</code></p>
+<p>Specifies the frequency at which agenda will query the database looking for jobs
+that need to be processed. Agenda internally uses <code>setTimeout</code> to guarantee that
+jobs run at (close to ~3ms) the right time.</p>
+<p>Decreasing the frequency will result in fewer database queries, but more jobs
+being stored in memory.</p>
+<p>Also worth noting is that if the job queue is shutdown, any jobs stored in memory
+that haven&#39;t run will still be locked, meaning that you may have to wait for the
+lock to expire. By default, processInterval is <code>&#39;5 seconds&#39;</code>.</p>
+<pre><code class="language-js"><span class="hl-0">agenda</span><span class="hl-1">.</span><span class="hl-5">processEvery</span><span class="hl-1">(</span><span class="hl-4">&#39;1 minute&#39;</span><span class="hl-1">);</span>
+</code></pre>
+<p>You can also specify it during instantiation</p>
+<pre><code class="language-js"><span class="hl-2">const</span><span class="hl-1"> </span><span class="hl-3">agenda</span><span class="hl-1"> = </span><span class="hl-2">new</span><span class="hl-1"> </span><span class="hl-5">Agenda</span><span class="hl-1">({ </span><span class="hl-0">processEvery:</span><span class="hl-1"> </span><span class="hl-4">&#39;30 seconds&#39;</span><span class="hl-1"> });</span>
+</code></pre>
+
+<a href="#maxconcurrencynumber" id="maxconcurrencynumber" style="color: inherit; text-decoration: none;">
+  <h3>maxConcurrency(number)</h3>
+</a>
+<p>Takes a <code>number</code> which specifies the max number of jobs that can be running at
+any given moment. By default it is <code>20</code>.</p>
+<pre><code class="language-js"><span class="hl-0">agenda</span><span class="hl-1">.</span><span class="hl-5">maxConcurrency</span><span class="hl-1">(</span><span class="hl-8">20</span><span class="hl-1">);</span>
+</code></pre>
+<p>You can also specify it during instantiation</p>
+<pre><code class="language-js"><span class="hl-2">const</span><span class="hl-1"> </span><span class="hl-3">agenda</span><span class="hl-1"> = </span><span class="hl-2">new</span><span class="hl-1"> </span><span class="hl-5">Agenda</span><span class="hl-1">({ </span><span class="hl-0">maxConcurrency:</span><span class="hl-1"> </span><span class="hl-8">20</span><span class="hl-1"> });</span>
+</code></pre>
+
+<a href="#defaultconcurrencynumber" id="defaultconcurrencynumber" style="color: inherit; text-decoration: none;">
+  <h3>defaultConcurrency(number)</h3>
+</a>
+<p>Takes a <code>number</code> which specifies the default number of a specific job that can be running at
+any given moment. By default it is <code>5</code>.</p>
+<pre><code class="language-js"><span class="hl-0">agenda</span><span class="hl-1">.</span><span class="hl-5">defaultConcurrency</span><span class="hl-1">(</span><span class="hl-8">5</span><span class="hl-1">);</span>
+</code></pre>
+<p>You can also specify it during instantiation</p>
+<pre><code class="language-js"><span class="hl-2">const</span><span class="hl-1"> </span><span class="hl-3">agenda</span><span class="hl-1"> = </span><span class="hl-2">new</span><span class="hl-1"> </span><span class="hl-5">Agenda</span><span class="hl-1">({ </span><span class="hl-0">defaultConcurrency:</span><span class="hl-1"> </span><span class="hl-8">5</span><span class="hl-1"> });</span>
+</code></pre>
+
+<a href="#locklimitnumber" id="locklimitnumber" style="color: inherit; text-decoration: none;">
+  <h3>lockLimit(number)</h3>
+</a>
+<p>Takes a <code>number</code> which specifies the max number jobs that can be locked at any given moment. By default it is <code>0</code> for no max.</p>
+<pre><code class="language-js"><span class="hl-0">agenda</span><span class="hl-1">.</span><span class="hl-5">lockLimit</span><span class="hl-1">(</span><span class="hl-8">0</span><span class="hl-1">);</span>
+</code></pre>
+<p>You can also specify it during instantiation</p>
+<pre><code class="language-js"><span class="hl-2">const</span><span class="hl-1"> </span><span class="hl-3">agenda</span><span class="hl-1"> = </span><span class="hl-2">new</span><span class="hl-1"> </span><span class="hl-5">Agenda</span><span class="hl-1">({ </span><span class="hl-0">lockLimit:</span><span class="hl-1"> </span><span class="hl-8">0</span><span class="hl-1"> });</span>
+</code></pre>
+
+<a href="#defaultlocklimitnumber" id="defaultlocklimitnumber" style="color: inherit; text-decoration: none;">
+  <h3>defaultLockLimit(number)</h3>
+</a>
+<p>Takes a <code>number</code> which specifies the default number of a specific job that can be locked at any given moment. By default it is <code>0</code> for no max.</p>
+<pre><code class="language-js"><span class="hl-0">agenda</span><span class="hl-1">.</span><span class="hl-5">defaultLockLimit</span><span class="hl-1">(</span><span class="hl-8">0</span><span class="hl-1">);</span>
+</code></pre>
+<p>You can also specify it during instantiation</p>
+<pre><code class="language-js"><span class="hl-2">const</span><span class="hl-1"> </span><span class="hl-3">agenda</span><span class="hl-1"> = </span><span class="hl-2">new</span><span class="hl-1"> </span><span class="hl-5">Agenda</span><span class="hl-1">({ </span><span class="hl-0">defaultLockLimit:</span><span class="hl-1"> </span><span class="hl-8">0</span><span class="hl-1"> });</span>
+</code></pre>
+
+<a href="#defaultlocklifetimenumber" id="defaultlocklifetimenumber" style="color: inherit; text-decoration: none;">
+  <h3>defaultLockLifetime(number)</h3>
+</a>
+<p>Takes a <code>number</code> which specifies the default lock lifetime in milliseconds. By
+default it is 10 minutes. This can be overridden by specifying the
+<code>lockLifetime</code> option to a defined job.</p>
+<p>A job will unlock if it is finished (ie. the returned Promise resolves/rejects
+or <code>done</code> is specified in the params and <code>done()</code> is called) before the
+<code>lockLifetime</code>. The lock is useful if the job crashes or times out.</p>
+<pre><code class="language-js"><span class="hl-0">agenda</span><span class="hl-1">.</span><span class="hl-5">defaultLockLifetime</span><span class="hl-1">(</span><span class="hl-8">10000</span><span class="hl-1">);</span>
+</code></pre>
+<p>You can also specify it during instantiation</p>
+<pre><code class="language-js"><span class="hl-2">const</span><span class="hl-1"> </span><span class="hl-3">agenda</span><span class="hl-1"> = </span><span class="hl-2">new</span><span class="hl-1"> </span><span class="hl-5">Agenda</span><span class="hl-1">({ </span><span class="hl-0">defaultLockLifetime:</span><span class="hl-1"> </span><span class="hl-8">10000</span><span class="hl-1"> });</span>
+</code></pre>
+
+<a href="#sortquery" id="sortquery" style="color: inherit; text-decoration: none;">
+  <h3>sort(query)</h3>
+</a>
+<p>Takes a <code>query</code> which specifies the sort query to be used for finding and locking the next job.</p>
+<p>By default it is <code>[[&#39;nextRunAt&#39;, &#39;ASC&#39;], [&#39;priority&#39;, &#39;DESC&#39;]]</code>, which obeys a first in first out approach, with respect to priority.</p>
+
+<a href="#agenda-events" id="agenda-events" style="color: inherit; text-decoration: none;">
+  <h2>Agenda Events</h2>
+</a>
+<p>An instance of an agenda will emit the following events:</p>
+<ul>
+<li><code>ready</code> - called when Agenda database connection is successfully opened and indices created.
+If you&#39;re passing agenda an existing connection, you shouldn&#39;t need to listen for this, as <code>agenda.start()</code> will not resolve until indices have been created.
+If you&#39;re using the <code>db</code> options, or call <code>database</code>, then you may still need to listen for the <code>ready</code> event before saving jobs. <code>agenda.start()</code> will still wait for the connection to be opened.</li>
+<li><code>error</code> - called when Agenda database connection process has thrown an error</li>
+</ul>
+<pre><code class="language-js"><span class="hl-7">await</span><span class="hl-1"> </span><span class="hl-0">agenda</span><span class="hl-1">.</span><span class="hl-5">start</span><span class="hl-1">();</span>
+</code></pre>
+
+<a href="#defining-job-processors" id="defining-job-processors" style="color: inherit; text-decoration: none;">
+  <h2>Defining Job Processors</h2>
+</a>
+<p>Before you can use a job, you must define its processing behavior.</p>
+
+<a href="#definejobname-fn-options" id="definejobname-fn-options" style="color: inherit; text-decoration: none;">
+  <h3>define(jobName, fn, [options])</h3>
+</a>
+<p>Defines a job with the name of <code>jobName</code>. When a job of <code>jobName</code> gets run, it
+will be passed to <code>fn(job, done)</code>. To maintain asynchronous behavior, you may
+either provide a Promise-returning function in <code>fn</code> <em>or</em> provide <code>done</code> as a
+second parameter to <code>fn</code>. If <code>done</code> is specified in the function signature, you
+must call <code>done()</code> when you are processing the job. If your function is
+synchronous or returns a Promise, you may omit <code>done</code> from the signature.</p>
+<p><code>options</code> is an optional argument which can overwrite the defaults. It can take
+the following:</p>
+<ul>
+<li><code>concurrency</code>: <code>number</code> maximum number of that job that can be running at once (per instance of agenda)</li>
+<li><code>lockLimit</code>: <code>number</code> maximum number of that job that can be locked at once (per instance of agenda)</li>
+<li><code>lockLifetime</code>: <code>number</code> interval in ms of how long the job stays locked for (see <a href="#multiple-job-processors">multiple job processors</a> for more info).
+A job will automatically unlock once a returned promise resolves/rejects (or if <code>done</code> is specified in the signature and <code>done()</code> is called).</li>
+<li><code>priority</code>: <code>(lowest|low|normal|high|highest|number)</code> specifies the priority
+of the job. Higher priority jobs will run first. See the priority mapping
+below</li>
+<li><code>shouldSaveResult</code>: <code>boolean</code> flag that specifies whether the result of the job should also be stored in the database. Defaults to false</li>
+</ul>
+<p>Priority mapping:</p>
+<pre><code><span class="hl-1">{</span><br/><span class="hl-1">  </span><span class="hl-9">highest</span><span class="hl-1">: </span><span class="hl-8">20</span><span class="hl-1">,</span><br/><span class="hl-1">  </span><span class="hl-9">high</span><span class="hl-1">: </span><span class="hl-8">10</span><span class="hl-1">,</span><br/><span class="hl-1">  </span><span class="hl-9">normal</span><span class="hl-1">: </span><span class="hl-8">0</span><span class="hl-1">,</span><br/><span class="hl-1">  </span><span class="hl-9">low</span><span class="hl-1">: -</span><span class="hl-8">10</span><span class="hl-1">,</span><br/><span class="hl-1">  </span><span class="hl-9">lowest</span><span class="hl-1">: -</span><span class="hl-8">20</span><br/><span class="hl-1">}</span>
+</code></pre>
+<p>Async Job:</p>
+<pre><code class="language-js"><span class="hl-0">agenda</span><span class="hl-1">.</span><span class="hl-5">define</span><span class="hl-1">(</span><span class="hl-4">&#39;some long running job&#39;</span><span class="hl-1">, </span><span class="hl-2">async</span><span class="hl-1"> </span><span class="hl-0">job</span><span class="hl-1"> </span><span class="hl-2">=&gt;</span><span class="hl-1"> {</span><br/><span class="hl-1">    </span><span class="hl-2">const</span><span class="hl-1"> </span><span class="hl-3">data</span><span class="hl-1"> = </span><span class="hl-7">await</span><span class="hl-1"> </span><span class="hl-5">doSomelengthyTask</span><span class="hl-1">();</span><br/><span class="hl-1">    </span><span class="hl-7">await</span><span class="hl-1"> </span><span class="hl-5">formatThatData</span><span class="hl-1">(</span><span class="hl-0">data</span><span class="hl-1">);</span><br/><span class="hl-1">    </span><span class="hl-7">await</span><span class="hl-1"> </span><span class="hl-5">sendThatData</span><span class="hl-1">(</span><span class="hl-0">data</span><span class="hl-1">);</span><br/><span class="hl-1">});</span>
+</code></pre>
+<p>Async Job (using <code>done</code>):</p>
+<pre><code class="language-js"><span class="hl-0">agenda</span><span class="hl-1">.</span><span class="hl-5">define</span><span class="hl-1">(</span><span class="hl-4">&#39;some long running job&#39;</span><span class="hl-1">, (</span><span class="hl-0">job</span><span class="hl-1">, </span><span class="hl-0">done</span><span class="hl-1">) </span><span class="hl-2">=&gt;</span><span class="hl-1"> {</span><br/><span class="hl-1">    </span><span class="hl-5">doSomelengthyTask</span><span class="hl-1">(</span><span class="hl-0">data</span><span class="hl-1"> </span><span class="hl-2">=&gt;</span><span class="hl-1"> {</span><br/><span class="hl-1">        </span><span class="hl-5">formatThatData</span><span class="hl-1">(</span><span class="hl-0">data</span><span class="hl-1">);</span><br/><span class="hl-1">        </span><span class="hl-5">sendThatData</span><span class="hl-1">(</span><span class="hl-0">data</span><span class="hl-1">);</span><br/><span class="hl-1">        </span><span class="hl-5">done</span><span class="hl-1">();</span><br/><span class="hl-1">    });</span><br/><span class="hl-1">});</span>
+</code></pre>
+<p>Sync Job:</p>
+<pre><code class="language-js"><span class="hl-0">agenda</span><span class="hl-1">.</span><span class="hl-5">define</span><span class="hl-1">(</span><span class="hl-4">&#39;say hello&#39;</span><span class="hl-1">, </span><span class="hl-0">job</span><span class="hl-1"> </span><span class="hl-2">=&gt;</span><span class="hl-1"> {</span><br/><span class="hl-1">    </span><span class="hl-0">console</span><span class="hl-1">.</span><span class="hl-5">log</span><span class="hl-1">(</span><span class="hl-4">&#39;Hello!&#39;</span><span class="hl-1">);</span><br/><span class="hl-1">});</span>
+</code></pre>
+<p><code>define()</code> acts like an assignment: if <code>define(jobName, ...)</code> is called multiple times (e.g. every time your script starts), the definition in the last call will overwrite the previous one. Thus, if you <code>define</code> the <code>jobName</code> only once in your code, it&#39;s safe for that call to execute multiple times.</p>
+
+<a href="#creating-jobs" id="creating-jobs" style="color: inherit; text-decoration: none;">
+  <h2>Creating Jobs</h2>
+</a>
+
+<a href="#everyinterval-name-data-options" id="everyinterval-name-data-options" style="color: inherit; text-decoration: none;">
+  <h3>every(interval, name, [data], [options])</h3>
+</a>
+<p>Runs job <code>name</code> at the given <code>interval</code>. Optionally, data and options can be passed in.
+Every creates a job of type <code>single</code>, which means that it will only create one
+job in the database, even if that line is run multiple times. This lets you put
+it in a file that may get run multiple times, such as <code>webserver.js</code> which may
+reboot from time to time.</p>
+<p><code>interval</code> can be a human-readable format <code>String</code>, a <a href="https://www.npmjs.com/package/cron-parser">cron format</a> <code>String</code>, or a <code>Number</code>.</p>
+<p><code>data</code> is an optional argument that will be passed to the processing function
+under <code>job.attrs.data</code>.</p>
+<p><code>options</code> is an optional argument that will be passed to <a href="#repeateveryinterval-options"><code>job.repeatEvery</code></a>.
+In order to use this argument, <code>data</code> must also be specified.</p>
+<p>Returns the <code>job</code>.</p>
+<pre><code class="language-js"><span class="hl-0">agenda</span><span class="hl-1">.</span><span class="hl-5">define</span><span class="hl-1">(</span><span class="hl-4">&#39;printAnalyticsReport&#39;</span><span class="hl-1">, </span><span class="hl-2">async</span><span class="hl-1"> </span><span class="hl-0">job</span><span class="hl-1"> </span><span class="hl-2">=&gt;</span><span class="hl-1"> {</span><br/><span class="hl-1">    </span><span class="hl-2">const</span><span class="hl-1"> </span><span class="hl-3">users</span><span class="hl-1"> = </span><span class="hl-7">await</span><span class="hl-1"> </span><span class="hl-0">User</span><span class="hl-1">.</span><span class="hl-5">doSomethingReallyIntensive</span><span class="hl-1">();</span><br/><span class="hl-1">    </span><span class="hl-5">processUserData</span><span class="hl-1">(</span><span class="hl-0">users</span><span class="hl-1">);</span><br/><span class="hl-1">    </span><span class="hl-0">console</span><span class="hl-1">.</span><span class="hl-5">log</span><span class="hl-1">(</span><span class="hl-4">&#39;I print a report!&#39;</span><span class="hl-1">);</span><br/><span class="hl-1">});</span><br/><br/><span class="hl-0">agenda</span><span class="hl-1">.</span><span class="hl-5">every</span><span class="hl-1">(</span><span class="hl-4">&#39;15 minutes&#39;</span><span class="hl-1">, </span><span class="hl-4">&#39;printAnalyticsReport&#39;</span><span class="hl-1">);</span>
+</code></pre>
+<p>Optionally, <code>name</code> could be array of job names, which is convenient for scheduling
+different jobs for same <code>interval</code>.</p>
+<pre><code class="language-js"><span class="hl-0">agenda</span><span class="hl-1">.</span><span class="hl-5">every</span><span class="hl-1">(</span><span class="hl-4">&#39;15 minutes&#39;</span><span class="hl-1">, [</span><span class="hl-4">&#39;printAnalyticsReport&#39;</span><span class="hl-1">, </span><span class="hl-4">&#39;sendNotifications&#39;</span><span class="hl-1">, </span><span class="hl-4">&#39;updateUserRecords&#39;</span><span class="hl-1">]);</span>
+</code></pre>
+<p>In this case, <code>every</code> returns array of <code>jobs</code>.</p>
+
+<a href="#schedulewhen-name-data" id="schedulewhen-name-data" style="color: inherit; text-decoration: none;">
+  <h3>schedule(when, name, [data])</h3>
+</a>
+<p>Schedules a job to run <code>name</code> once at a given time. <code>when</code> can be a <code>Date</code> or a
+<code>String</code> such as <code>tomorrow at 5pm</code>.</p>
+<p><code>data</code> is an optional argument that will be passed to the processing function
+under <code>job.attrs.data</code>.</p>
+<p>Returns the <code>job</code>.</p>
+<pre><code class="language-js"><span class="hl-0">agenda</span><span class="hl-1">.</span><span class="hl-5">schedule</span><span class="hl-1">(</span><span class="hl-4">&#39;tomorrow at noon&#39;</span><span class="hl-1">, </span><span class="hl-4">&#39;printAnalyticsReport&#39;</span><span class="hl-1">, { </span><span class="hl-0">userCount:</span><span class="hl-1"> </span><span class="hl-8">100</span><span class="hl-1"> });</span>
+</code></pre>
+<p>Optionally, <code>name</code> could be array of job names, similar to the <code>every</code> method.</p>
+<pre><code class="language-js"><span class="hl-0">agenda</span><span class="hl-1">.</span><span class="hl-5">schedule</span><span class="hl-1">(</span><span class="hl-4">&#39;tomorrow at noon&#39;</span><span class="hl-1">, [</span><br/><span class="hl-1">    </span><span class="hl-4">&#39;printAnalyticsReport&#39;</span><span class="hl-1">,</span><br/><span class="hl-1">    </span><span class="hl-4">&#39;sendNotifications&#39;</span><span class="hl-1">,</span><br/><span class="hl-1">    </span><span class="hl-4">&#39;updateUserRecords&#39;</span><br/><span class="hl-1">]);</span>
+</code></pre>
+<p>In this case, <code>schedule</code> returns array of <code>jobs</code>.</p>
+
+<a href="#nowname-data" id="nowname-data" style="color: inherit; text-decoration: none;">
+  <h3>now(name, [data])</h3>
+</a>
+<p>Schedules a job to run <code>name</code> once immediately.</p>
+<p><code>data</code> is an optional argument that will be passed to the processing function
+under <code>job.attrs.data</code>.</p>
+<p>Returns the <code>job</code>.</p>
+<pre><code class="language-js"><span class="hl-0">agenda</span><span class="hl-1">.</span><span class="hl-5">now</span><span class="hl-1">(</span><span class="hl-4">&#39;do the hokey pokey&#39;</span><span class="hl-1">);</span>
+</code></pre>
+
+<a href="#createjobname-data" id="createjobname-data" style="color: inherit; text-decoration: none;">
+  <h3>create(jobName, data)</h3>
+</a>
+<p>Returns an instance of a <code>jobName</code> with <code>data</code>. This does <em>NOT</em> save the job in
+the database. See below to learn how to manually work with jobs.</p>
+<pre><code class="language-js"><span class="hl-2">const</span><span class="hl-1"> </span><span class="hl-3">job</span><span class="hl-1"> = </span><span class="hl-0">agenda</span><span class="hl-1">.</span><span class="hl-5">create</span><span class="hl-1">(</span><span class="hl-4">&#39;printAnalyticsReport&#39;</span><span class="hl-1">, { </span><span class="hl-0">userCount:</span><span class="hl-1"> </span><span class="hl-8">100</span><span class="hl-1"> });</span><br/><span class="hl-7">await</span><span class="hl-1"> </span><span class="hl-0">job</span><span class="hl-1">.</span><span class="hl-5">save</span><span class="hl-1">();</span><br/><span class="hl-0">console</span><span class="hl-1">.</span><span class="hl-5">log</span><span class="hl-1">(</span><span class="hl-4">&#39;Job successfully saved&#39;</span><span class="hl-1">);</span>
+</code></pre>
+
+<a href="#managing-jobs" id="managing-jobs" style="color: inherit; text-decoration: none;">
+  <h2>Managing Jobs</h2>
+</a>
+
+<a href="#jobsquery-sort-limit-skip" id="jobsquery-sort-limit-skip" style="color: inherit; text-decoration: none;">
+  <h3>jobs(query, sort, limit, skip)</h3>
+</a>
+<p>Lets you query (then sort, limit and skip the result) all of the jobs in the agenda job&#39;s database. For more information about Sequelize, <code>query</code>, <code>order</code>/<code>sort</code>, <code>limit</code>, and <code>offset</code>/<code>skip</code>, see <a href="https://sequelize.org/docs/v6/core-concepts/model-querying-basics/">Sequelize queries</a>.</p>
+<pre><code class="language-js"><span class="hl-2">const</span><span class="hl-1"> </span><span class="hl-3">jobs</span><span class="hl-1"> = </span><span class="hl-7">await</span><span class="hl-1"> </span><span class="hl-0">agenda</span><span class="hl-1">.</span><span class="hl-5">jobs</span><span class="hl-1">({ </span><span class="hl-0">name:</span><span class="hl-1"> </span><span class="hl-4">&#39;printAnalyticsReport&#39;</span><span class="hl-1"> }, { </span><span class="hl-0">data:</span><span class="hl-1"> -</span><span class="hl-8">1</span><span class="hl-1"> }, </span><span class="hl-8">3</span><span class="hl-1">, </span><span class="hl-8">1</span><span class="hl-1">);</span><br/><span class="hl-6">// Work with jobs (see below)</span>
+</code></pre>
+
+<a href="#cancelquery" id="cancelquery" style="color: inherit; text-decoration: none;">
+  <h3>cancel(query)</h3>
+</a>
+<p>Cancels any jobs matching the passed sequelize &quot;where&quot; query, and removes them from the database. Returns a Promise resolving to the number of cancelled jobs, or rejecting on error.</p>
+<pre><code class="language-js"><span class="hl-2">const</span><span class="hl-1"> </span><span class="hl-3">numRemoved</span><span class="hl-1"> = </span><span class="hl-7">await</span><span class="hl-1"> </span><span class="hl-0">agenda</span><span class="hl-1">.</span><span class="hl-5">cancel</span><span class="hl-1">({ </span><span class="hl-0">name:</span><span class="hl-1"> </span><span class="hl-4">&#39;printAnalyticsReport&#39;</span><span class="hl-1"> });</span>
+</code></pre>
+<p>This functionality can also be achieved by first retrieving all the jobs from the database using <code>agenda.jobs()</code>, looping through the resulting array and calling <code>job.remove()</code> on each. It is however preferable to use <code>agenda.cancel()</code> for this use case, as this ensures the operation is atomic.</p>
+
+<a href="#disablequery" id="disablequery" style="color: inherit; text-decoration: none;">
+  <h3>disable(query)</h3>
+</a>
+<p>Disables any jobs matching the passed sequelize &quot;where&quot; query, preventing any matching jobs from being run by the Job Processor.</p>
+<pre><code class="language-js"><span class="hl-2">const</span><span class="hl-1"> </span><span class="hl-3">numDisabled</span><span class="hl-1"> = </span><span class="hl-7">await</span><span class="hl-1"> </span><span class="hl-0">agenda</span><span class="hl-1">.</span><span class="hl-5">disable</span><span class="hl-1">({ </span><span class="hl-0">name:</span><span class="hl-1"> </span><span class="hl-4">&#39;pollExternalService&#39;</span><span class="hl-1"> });</span>
+</code></pre>
+<p>Similar to <code>agenda.cancel()</code>, this functionality can be acheived with a combination of <code>agenda.jobs()</code> and <code>job.disable()</code></p>
+
+<a href="#enablequery" id="enablequery" style="color: inherit; text-decoration: none;">
+  <h3>enable(query)</h3>
+</a>
+<p>Enables any jobs matching the passed sequelize &quot;where&quot; query, allowing any matching jobs to be run by the Job Processor.</p>
+<pre><code class="language-js"><span class="hl-2">const</span><span class="hl-1"> </span><span class="hl-3">numEnabled</span><span class="hl-1"> = </span><span class="hl-7">await</span><span class="hl-1"> </span><span class="hl-0">agenda</span><span class="hl-1">.</span><span class="hl-5">enable</span><span class="hl-1">({ </span><span class="hl-0">name:</span><span class="hl-1"> </span><span class="hl-4">&#39;pollExternalService&#39;</span><span class="hl-1"> });</span>
+</code></pre>
+<p>Similar to <code>agenda.cancel()</code>, this functionality can be acheived with a combination of <code>agenda.jobs()</code> and <code>job.enable()</code></p>
+
+<a href="#purge" id="purge" style="color: inherit; text-decoration: none;">
+  <h3>purge()</h3>
+</a>
+<p>Removes all jobs in the database without defined behaviors. Useful if you change a definition name and want to remove old jobs. Returns a Promise resolving to the number of removed jobs, or rejecting on error.</p>
+<p><em>IMPORTANT:</em> Do not run this before you finish defining all of your jobs. If you do, you will nuke your database of jobs.</p>
+<pre><code class="language-js"><span class="hl-2">const</span><span class="hl-1"> </span><span class="hl-3">numRemoved</span><span class="hl-1"> = </span><span class="hl-7">await</span><span class="hl-1"> </span><span class="hl-0">agenda</span><span class="hl-1">.</span><span class="hl-5">purge</span><span class="hl-1">();</span>
+</code></pre>
+
+<a href="#starting-the-job-processor" id="starting-the-job-processor" style="color: inherit; text-decoration: none;">
+  <h2>Starting the job processor</h2>
+</a>
+<p>To get agenda to start processing jobs from the database you must start it. This
+will schedule an interval (based on <code>processEvery</code>) to check for new jobs and
+run them. You can also stop the queue.</p>
+
+<a href="#start" id="start" style="color: inherit; text-decoration: none;">
+  <h3>start</h3>
+</a>
+<p>Starts the job queue processing, checking <a href="#processeveryinterval"><code>processEvery</code></a> time to see if there
+are new jobs. Must be called <em>after</em> <code>processEvery</code>, and <em>before</em> any job scheduling (e.g. <code>every</code>).</p>
+
+<a href="#stop" id="stop" style="color: inherit; text-decoration: none;">
+  <h3>stop</h3>
+</a>
+<p>Stops the job queue processing. Unlocks currently running jobs.</p>
+<p>This can be very useful for graceful shutdowns so that currently running/grabbed jobs are abandoned so that other
+job queues can grab them / they are unlocked should the job queue start again. Here is an example of how to do a graceful
+shutdown.</p>
+<pre><code class="language-js"><span class="hl-2">async</span><span class="hl-1"> </span><span class="hl-2">function</span><span class="hl-1"> </span><span class="hl-5">graceful</span><span class="hl-1">() {</span><br/><span class="hl-1">    </span><span class="hl-7">await</span><span class="hl-1"> </span><span class="hl-0">agenda</span><span class="hl-1">.</span><span class="hl-5">stop</span><span class="hl-1">();</span><br/><span class="hl-1">    </span><span class="hl-0">process</span><span class="hl-1">.</span><span class="hl-5">exit</span><span class="hl-1">(</span><span class="hl-8">0</span><span class="hl-1">);</span><br/><span class="hl-1">}</span><br/><br/><span class="hl-0">process</span><span class="hl-1">.</span><span class="hl-5">on</span><span class="hl-1">(</span><span class="hl-4">&#39;SIGTERM&#39;</span><span class="hl-1">, </span><span class="hl-0">graceful</span><span class="hl-1">);</span><br/><span class="hl-0">process</span><span class="hl-1">.</span><span class="hl-5">on</span><span class="hl-1">(</span><span class="hl-4">&#39;SIGINT&#39;</span><span class="hl-1">, </span><span class="hl-0">graceful</span><span class="hl-1">);</span>
+</code></pre>
+
+<a href="#multiple-job-processors" id="multiple-job-processors" style="color: inherit; text-decoration: none;">
+  <h2>Multiple job processors</h2>
+</a>
+<p>Sometimes you may want to have multiple node instances / machines process from
+the same queue. Agenda supports a locking mechanism to ensure that multiple
+queues don&#39;t process the same job.</p>
+<p>You can configure the locking mechanism by specifying <code>lockLifetime</code> as an
+interval when defining the job.</p>
+<pre><code class="language-js"><span class="hl-0">agenda</span><span class="hl-1">.</span><span class="hl-5">define</span><span class="hl-1">(</span><br/><span class="hl-1">    </span><span class="hl-4">&#39;someJob&#39;</span><span class="hl-1">,</span><br/><span class="hl-1">    (</span><span class="hl-0">job</span><span class="hl-1">, </span><span class="hl-0">cb</span><span class="hl-1">) </span><span class="hl-2">=&gt;</span><span class="hl-1"> {</span><br/><span class="hl-1">        </span><span class="hl-6">// Do something in 10 seconds or less...</span><br/><span class="hl-1">    },</span><br/><span class="hl-1">    { </span><span class="hl-0">lockLifetime:</span><span class="hl-1"> </span><span class="hl-8">10000</span><span class="hl-1"> }</span><br/><span class="hl-1">);</span>
+</code></pre>
+<p>This will ensure that no other job processor (this one included) attempts to run the job again
+for the next 10 seconds. If you have a particularly long running job, you will want to
+specify a longer lockLifetime.</p>
+<p>By default it is 10 minutes. Typically you shouldn&#39;t have a job that runs for 10 minutes,
+so this is really insurance should the job queue crash before the job is unlocked.</p>
+<p>When a job is finished (i.e. the returned promise resolves/rejects or <code>done</code> is
+specified in the signature and <code>done()</code> is called), it will automatically unlock.</p>
+
+<a href="#manually-working-with-a-job" id="manually-working-with-a-job" style="color: inherit; text-decoration: none;">
+  <h2>Manually working with a job</h2>
+</a>
+<p>A job instance has many instance methods. All mutating methods must be followed
+with a call to <code>await job.save()</code> in order to persist the changes to the database.</p>
+
+<a href="#repeateveryinterval-options" id="repeateveryinterval-options" style="color: inherit; text-decoration: none;">
+  <h3>repeatEvery(interval, [options])</h3>
+</a>
+<p>Specifies an <code>interval</code> on which the job should repeat. The job runs at the time of defining as well in configured intervals, that is &quot;run <em>now</em> and in intervals&quot;.</p>
+<p><code>interval</code> can be a human-readable format <code>String</code>, a <a href="https://www.npmjs.com/package/cron-parser">cron format</a> <code>String</code>, or a <code>Number</code>.</p>
+<p><code>options</code> is an optional argument containing:</p>
+<p><code>options.timezone</code>: should be a string as accepted by <a href="https://momentjs.com/timezone/">moment-timezone</a> and is considered when using an interval in the cron string format.</p>
+<p><code>options.skipImmediate</code>: <code>true</code> | <code>false</code> (default) Setting this <code>true</code> will skip the immediate run. The first run will occur only in configured interval.</p>
+<p><code>options.startDate</code>: <code>Date</code> the first time the job runs, should be equal or after the start date.</p>
+<p><code>options.endDate</code>: <code>Date</code> the job should not repeat after the endDate. The job can run on the end-date itself, but not after that.</p>
+<p><code>options.skipDays</code>: <code>human readable string</code> (&#39;2 days&#39;). After each run, it will skip the duration of &#39;skipDays&#39;</p>
+<pre><code class="language-js"><span class="hl-0">job</span><span class="hl-1">.</span><span class="hl-5">repeatEvery</span><span class="hl-1">(</span><span class="hl-4">&#39;10 minutes&#39;</span><span class="hl-1">);</span><br/><span class="hl-7">await</span><span class="hl-1"> </span><span class="hl-0">job</span><span class="hl-1">.</span><span class="hl-5">save</span><span class="hl-1">();</span>
+</code></pre>
+<pre><code class="language-js"><span class="hl-0">job</span><span class="hl-1">.</span><span class="hl-5">repeatEvery</span><span class="hl-1">(</span><span class="hl-4">&#39;3 minutes&#39;</span><span class="hl-1">, {</span><br/><span class="hl-1">    </span><span class="hl-0">skipImmediate:</span><span class="hl-1"> </span><span class="hl-2">true</span><br/><span class="hl-1">});</span><br/><span class="hl-7">await</span><span class="hl-1"> </span><span class="hl-0">job</span><span class="hl-1">.</span><span class="hl-5">save</span><span class="hl-1">();</span>
+</code></pre>
+<pre><code class="language-js"><span class="hl-0">job</span><span class="hl-1">.</span><span class="hl-5">repeatEvery</span><span class="hl-1">(</span><span class="hl-4">&#39;0 6 * * *&#39;</span><span class="hl-1">, {</span><br/><span class="hl-1">    </span><span class="hl-0">timezone:</span><span class="hl-1"> </span><span class="hl-4">&#39;America/New_York&#39;</span><br/><span class="hl-1">});</span><br/><span class="hl-7">await</span><span class="hl-1"> </span><span class="hl-0">job</span><span class="hl-1">.</span><span class="hl-5">save</span><span class="hl-1">();</span>
+</code></pre>
+
+<a href="#repeatattime" id="repeatattime" style="color: inherit; text-decoration: none;">
+  <h3>repeatAt(time)</h3>
+</a>
+<p>Specifies a <code>time</code> when the job should repeat. <a href="https://github.com/matthewmueller/date#examples">Possible values</a></p>
+<pre><code class="language-js"><span class="hl-0">job</span><span class="hl-1">.</span><span class="hl-5">repeatAt</span><span class="hl-1">(</span><span class="hl-4">&#39;3:30pm&#39;</span><span class="hl-1">);</span><br/><span class="hl-7">await</span><span class="hl-1"> </span><span class="hl-0">job</span><span class="hl-1">.</span><span class="hl-5">save</span><span class="hl-1">();</span>
+</code></pre>
+
+<a href="#scheduletime" id="scheduletime" style="color: inherit; text-decoration: none;">
+  <h3>schedule(time)</h3>
+</a>
+<p>Specifies the next <code>time</code> at which the job should run.</p>
+<pre><code class="language-js"><span class="hl-0">job</span><span class="hl-1">.</span><span class="hl-5">schedule</span><span class="hl-1">(</span><span class="hl-4">&#39;tomorrow at 6pm&#39;</span><span class="hl-1">);</span><br/><span class="hl-7">await</span><span class="hl-1"> </span><span class="hl-0">job</span><span class="hl-1">.</span><span class="hl-5">save</span><span class="hl-1">();</span>
+</code></pre>
+
+<a href="#prioritypriority" id="prioritypriority" style="color: inherit; text-decoration: none;">
+  <h3>priority(priority)</h3>
+</a>
+<p>Specifies the <code>priority</code> weighting of the job. Can be a number or a string from
+the above priority table.</p>
+<pre><code class="language-js"><span class="hl-0">job</span><span class="hl-1">.</span><span class="hl-5">priority</span><span class="hl-1">(</span><span class="hl-4">&#39;low&#39;</span><span class="hl-1">);</span><br/><span class="hl-7">await</span><span class="hl-1"> </span><span class="hl-0">job</span><span class="hl-1">.</span><span class="hl-5">save</span><span class="hl-1">();</span>
+</code></pre>
+
+<a href="#setshouldsaveresultsetshouldsaveresult" id="setshouldsaveresultsetshouldsaveresult" style="color: inherit; text-decoration: none;">
+  <h3>setShouldSaveResult(setShouldSaveResult)</h3>
+</a>
+<p>Specifies whether the result of the job should also be stored in the database. Defaults to false.</p>
+<pre><code class="language-js"><span class="hl-0">job</span><span class="hl-1">.</span><span class="hl-5">setShouldSaveResult</span><span class="hl-1">(</span><span class="hl-2">true</span><span class="hl-1">);</span><br/><span class="hl-7">await</span><span class="hl-1"> </span><span class="hl-0">job</span><span class="hl-1">.</span><span class="hl-5">save</span><span class="hl-1">();</span>
+</code></pre>
+<p>The data returned by the job will be available on the <code>result</code> attribute after it succeeded and got retrieved again from the database, e.g. via <code>agenda.jobs(...)</code> or through the <a href="#agenda-events">success job event</a>).</p>
+
+<a href="#uniqueproperties-options" id="uniqueproperties-options" style="color: inherit; text-decoration: none;">
+  <h3>unique(properties, [options])</h3>
+</a>
+<p>Ensure that only one instance of this job exists with the specified properties</p>
+<p><code>options</code> is an optional argument which can overwrite the defaults. It can take
+the following:</p>
+<ul>
+<li><code>insertOnly</code>: <code>boolean</code> will prevent any properties from persisting if the job already exists. Defaults to false.</li>
+</ul>
+<pre><code class="language-js"><span class="hl-0">job</span><span class="hl-1">.</span><span class="hl-5">unique</span><span class="hl-1">({ </span><span class="hl-4">&#39;data.type&#39;</span><span class="hl-0">:</span><span class="hl-1"> </span><span class="hl-4">&#39;active&#39;</span><span class="hl-1">, </span><span class="hl-4">&#39;data.userId&#39;</span><span class="hl-0">:</span><span class="hl-1"> </span><span class="hl-4">&#39;123&#39;</span><span class="hl-1">, </span><span class="hl-0">nextRunAt:</span><span class="hl-1"> </span><span class="hl-0">date</span><span class="hl-1"> });</span><br/><span class="hl-7">await</span><span class="hl-1"> </span><span class="hl-0">job</span><span class="hl-1">.</span><span class="hl-5">save</span><span class="hl-1">();</span>
+</code></pre>
+
+<a href="#failreason" id="failreason" style="color: inherit; text-decoration: none;">
+  <h3>fail(reason)</h3>
+</a>
+<p>Sets <code>job.attrs.failedAt</code> to <code>now</code>, and sets <code>job.attrs.failReason</code> to <code>reason</code>.</p>
+<p>Optionally, <code>reason</code> can be an error, in which case <code>job.attrs.failReason</code> will
+be set to <code>error.message</code></p>
+<pre><code class="language-js"><span class="hl-0">job</span><span class="hl-1">.</span><span class="hl-5">fail</span><span class="hl-1">(</span><span class="hl-4">&#39;insufficient disk space&#39;</span><span class="hl-1">);</span><br/><span class="hl-6">// or</span><br/><span class="hl-0">job</span><span class="hl-1">.</span><span class="hl-5">fail</span><span class="hl-1">(</span><span class="hl-2">new</span><span class="hl-1"> </span><span class="hl-10">Error</span><span class="hl-1">(</span><span class="hl-4">&#39;insufficient disk space&#39;</span><span class="hl-1">));</span><br/><span class="hl-7">await</span><span class="hl-1"> </span><span class="hl-0">job</span><span class="hl-1">.</span><span class="hl-5">save</span><span class="hl-1">();</span>
+</code></pre>
+
+<a href="#runcallback" id="runcallback" style="color: inherit; text-decoration: none;">
+  <h3>run(callback)</h3>
+</a>
+<p>Runs the given <code>job</code> and calls <code>callback(err, job)</code> upon completion. Normally
+you never need to call this manually.</p>
+<pre><code class="language-js"><span class="hl-0">job</span><span class="hl-1">.</span><span class="hl-5">run</span><span class="hl-1">((</span><span class="hl-0">err</span><span class="hl-1">, </span><span class="hl-0">job</span><span class="hl-1">) </span><span class="hl-2">=&gt;</span><span class="hl-1"> {</span><br/><span class="hl-1">    </span><span class="hl-0">console</span><span class="hl-1">.</span><span class="hl-5">log</span><span class="hl-1">(</span><span class="hl-4">&quot;I don&#39;t know why you would need to do this...&quot;</span><span class="hl-1">);</span><br/><span class="hl-1">});</span>
+</code></pre>
+
+<a href="#save" id="save" style="color: inherit; text-decoration: none;">
+  <h3>save()</h3>
+</a>
+<p>Saves the <code>job.attrs</code> into the database. Returns a Promise resolving to a Job instance, or rejecting on error.</p>
+<pre><code class="language-js"><span class="hl-7">try</span><span class="hl-1"> {</span><br/><span class="hl-1">    </span><span class="hl-7">await</span><span class="hl-1"> </span><span class="hl-0">job</span><span class="hl-1">.</span><span class="hl-5">save</span><span class="hl-1">();</span><br/><span class="hl-1">    </span><span class="hl-0">cosole</span><span class="hl-1">.</span><span class="hl-5">log</span><span class="hl-1">(</span><span class="hl-4">&#39;Successfully saved job to collection&#39;</span><span class="hl-1">);</span><br/><span class="hl-1">} </span><span class="hl-7">catch</span><span class="hl-1"> (</span><span class="hl-0">e</span><span class="hl-1">) {</span><br/><span class="hl-1">    </span><span class="hl-0">console</span><span class="hl-1">.</span><span class="hl-5">error</span><span class="hl-1">(</span><span class="hl-4">&#39;Error saving job to collection&#39;</span><span class="hl-1">);</span><br/><span class="hl-1">}</span>
+</code></pre>
+
+<a href="#remove" id="remove" style="color: inherit; text-decoration: none;">
+  <h3>remove()</h3>
+</a>
+<p>Removes the <code>job</code> from the database. Returns a Promise resolving to the number of jobs removed, or rejecting on error.</p>
+<pre><code class="language-js"><span class="hl-7">try</span><span class="hl-1"> {</span><br/><span class="hl-1">    </span><span class="hl-7">await</span><span class="hl-1"> </span><span class="hl-0">job</span><span class="hl-1">.</span><span class="hl-5">remove</span><span class="hl-1">();</span><br/><span class="hl-1">    </span><span class="hl-0">console</span><span class="hl-1">.</span><span class="hl-5">log</span><span class="hl-1">(</span><span class="hl-4">&#39;Successfully removed job from collection&#39;</span><span class="hl-1">);</span><br/><span class="hl-1">} </span><span class="hl-7">catch</span><span class="hl-1"> (</span><span class="hl-0">e</span><span class="hl-1">) {</span><br/><span class="hl-1">    </span><span class="hl-0">console</span><span class="hl-1">.</span><span class="hl-5">error</span><span class="hl-1">(</span><span class="hl-4">&#39;Error removing job from collection&#39;</span><span class="hl-1">);</span><br/><span class="hl-1">}</span>
+</code></pre>
+
+<a href="#disable" id="disable" style="color: inherit; text-decoration: none;">
+  <h3>disable()</h3>
+</a>
+<p>Disables the <code>job</code>. Upcoming runs won&#39;t execute.</p>
+
+<a href="#enable" id="enable" style="color: inherit; text-decoration: none;">
+  <h3>enable()</h3>
+</a>
+<p>Enables the <code>job</code> if it got disabled before. Upcoming runs will execute.</p>
+
+<a href="#touch" id="touch" style="color: inherit; text-decoration: none;">
+  <h3>touch()</h3>
+</a>
+<p>Resets the lock on the job. Useful to indicate that the job hasn&#39;t timed out
+when you have very long running jobs. The call returns a promise that resolves
+when the job&#39;s lock has been renewed.</p>
+<pre><code class="language-js"><span class="hl-0">agenda</span><span class="hl-1">.</span><span class="hl-5">define</span><span class="hl-1">(</span><span class="hl-4">&#39;super long job&#39;</span><span class="hl-1">, </span><span class="hl-2">async</span><span class="hl-1"> </span><span class="hl-0">job</span><span class="hl-1"> </span><span class="hl-2">=&gt;</span><span class="hl-1"> {</span><br/><span class="hl-1">    </span><span class="hl-7">await</span><span class="hl-1"> </span><span class="hl-5">doSomeLongTask</span><span class="hl-1">();</span><br/><span class="hl-1">    </span><span class="hl-7">await</span><span class="hl-1"> </span><span class="hl-0">job</span><span class="hl-1">.</span><span class="hl-5">touch</span><span class="hl-1">();</span><br/><span class="hl-1">    </span><span class="hl-7">await</span><span class="hl-1"> </span><span class="hl-5">doAnotherLongTask</span><span class="hl-1">();</span><br/><span class="hl-1">    </span><span class="hl-7">await</span><span class="hl-1"> </span><span class="hl-0">job</span><span class="hl-1">.</span><span class="hl-5">touch</span><span class="hl-1">();</span><br/><span class="hl-1">    </span><span class="hl-7">await</span><span class="hl-1"> </span><span class="hl-5">finishOurLongTasks</span><span class="hl-1">();</span><br/><span class="hl-1">});</span>
+</code></pre>
+
+<a href="#job-queue-events" id="job-queue-events" style="color: inherit; text-decoration: none;">
+  <h2>Job Queue Events</h2>
+</a>
+<p>An instance of an agenda will emit the following events:</p>
+<ul>
+<li><code>start</code> - called just before a job starts</li>
+<li><code>start:job name</code> - called just before the specified job starts</li>
+</ul>
+<pre><code class="language-js"><span class="hl-0">agenda</span><span class="hl-1">.</span><span class="hl-5">on</span><span class="hl-1">(</span><span class="hl-4">&#39;start&#39;</span><span class="hl-1">, </span><span class="hl-0">job</span><span class="hl-1"> </span><span class="hl-2">=&gt;</span><span class="hl-1"> {</span><br/><span class="hl-1">    </span><span class="hl-0">console</span><span class="hl-1">.</span><span class="hl-5">log</span><span class="hl-1">(</span><span class="hl-4">&#39;Job %s starting&#39;</span><span class="hl-1">, </span><span class="hl-0">job</span><span class="hl-1">.</span><span class="hl-0">attrs</span><span class="hl-1">.</span><span class="hl-0">name</span><span class="hl-1">);</span><br/><span class="hl-1">});</span>
+</code></pre>
+<ul>
+<li><code>complete</code> - called when a job finishes, regardless of if it succeeds or fails</li>
+<li><code>complete:job name</code> - called when a job finishes, regardless of if it succeeds or fails</li>
+</ul>
+<pre><code class="language-js"><span class="hl-0">agenda</span><span class="hl-1">.</span><span class="hl-5">on</span><span class="hl-1">(</span><span class="hl-4">&#39;complete&#39;</span><span class="hl-1">, </span><span class="hl-0">job</span><span class="hl-1"> </span><span class="hl-2">=&gt;</span><span class="hl-1"> {</span><br/><span class="hl-1">    </span><span class="hl-0">console</span><span class="hl-1">.</span><span class="hl-5">log</span><span class="hl-1">(</span><span class="hl-4">`Job </span><span class="hl-2">${</span><span class="hl-0">job</span><span class="hl-11">.</span><span class="hl-0">attrs</span><span class="hl-11">.</span><span class="hl-0">name</span><span class="hl-2">}</span><span class="hl-4"> finished`</span><span class="hl-1">);</span><br/><span class="hl-1">});</span>
+</code></pre>
+<ul>
+<li><code>success</code> - called when a job finishes successfully</li>
+<li><code>success:job name</code> - called when a job finishes successfully</li>
+</ul>
+<pre><code class="language-js"><span class="hl-0">agenda</span><span class="hl-1">.</span><span class="hl-5">on</span><span class="hl-1">(</span><span class="hl-4">&#39;success:send email&#39;</span><span class="hl-1">, </span><span class="hl-0">job</span><span class="hl-1"> </span><span class="hl-2">=&gt;</span><span class="hl-1"> {</span><br/><span class="hl-1">    </span><span class="hl-0">console</span><span class="hl-1">.</span><span class="hl-5">log</span><span class="hl-1">(</span><span class="hl-4">`Sent Email Successfully to </span><span class="hl-2">${</span><span class="hl-0">job</span><span class="hl-11">.</span><span class="hl-0">attrs</span><span class="hl-11">.</span><span class="hl-0">data</span><span class="hl-11">.</span><span class="hl-0">to</span><span class="hl-2">}</span><span class="hl-4">`</span><span class="hl-1">);</span><br/><span class="hl-1">});</span>
+</code></pre>
+<ul>
+<li><code>fail</code> - called when a job throws an error</li>
+<li><code>fail:job name</code> - called when a job throws an error</li>
+</ul>
+<pre><code class="language-js"><span class="hl-0">agenda</span><span class="hl-1">.</span><span class="hl-5">on</span><span class="hl-1">(</span><span class="hl-4">&#39;fail:send email&#39;</span><span class="hl-1">, (</span><span class="hl-0">err</span><span class="hl-1">, </span><span class="hl-0">job</span><span class="hl-1">) </span><span class="hl-2">=&gt;</span><span class="hl-1"> {</span><br/><span class="hl-1">    </span><span class="hl-0">console</span><span class="hl-1">.</span><span class="hl-5">log</span><span class="hl-1">(</span><span class="hl-4">`Job failed with error: </span><span class="hl-2">${</span><span class="hl-0">err</span><span class="hl-11">.</span><span class="hl-0">message</span><span class="hl-2">}</span><span class="hl-4">`</span><span class="hl-1">);</span><br/><span class="hl-1">});</span>
+</code></pre>
+
+<a href="#example-project-structure" id="example-project-structure" style="color: inherit; text-decoration: none;">
+  <h1>Example Project Structure</h1>
+</a>
+<p>Agenda will only process jobs that it has definitions for. This allows you to
+selectively choose which jobs a given agenda will process.</p>
+<p>Consider the following project structure, which allows us to share models with
+the rest of our code base, and specify which jobs a worker processes, if any at
+all.</p>
+<pre><code><span class="hl-1">- </span><span class="hl-0">server</span><span class="hl-1">.</span><span class="hl-0">js</span><br/><span class="hl-1">- </span><span class="hl-0">worker</span><span class="hl-1">.</span><span class="hl-0">js</span><br/><span class="hl-0">lib</span><span class="hl-1">/</span><br/><span class="hl-1">  - </span><span class="hl-0">agenda</span><span class="hl-1">.</span><span class="hl-0">js</span><br/><span class="hl-1">  </span><span class="hl-0">controllers</span><span class="hl-1">/</span><br/><span class="hl-1">    - </span><span class="hl-0">user</span><span class="hl-1">-</span><span class="hl-0">controller</span><span class="hl-1">.</span><span class="hl-0">js</span><br/><span class="hl-1">  </span><span class="hl-0">jobs</span><span class="hl-1">/</span><br/><span class="hl-1">    - </span><span class="hl-0">email</span><span class="hl-1">.</span><span class="hl-0">js</span><br/><span class="hl-1">    - </span><span class="hl-0">video</span><span class="hl-1">-</span><span class="hl-0">processing</span><span class="hl-1">.</span><span class="hl-0">js</span><br/><span class="hl-1">    - </span><span class="hl-0">image</span><span class="hl-1">-</span><span class="hl-0">processing</span><span class="hl-1">.</span><span class="hl-0">js</span><br/><span class="hl-1">   </span><span class="hl-0">models</span><span class="hl-1">/</span><br/><span class="hl-1">     - </span><span class="hl-0">user</span><span class="hl-1">-</span><span class="hl-0">model</span><span class="hl-1">.</span><span class="hl-0">js</span><br/><span class="hl-1">     - </span><span class="hl-0">blog</span><span class="hl-1">-</span><span class="hl-0">post</span><span class="hl-1">.</span><span class="hl-0">model</span><span class="hl-1">.</span><span class="hl-0">js</span>
+</code></pre>
+<p>Sample job processor (eg. <code>jobs/email.js</code>)</p>
+<pre><code class="language-js"><span class="hl-2">let</span><span class="hl-1"> </span><span class="hl-0">email</span><span class="hl-1"> = </span><span class="hl-5">require</span><span class="hl-1">(</span><span class="hl-4">&#39;some-email-lib&#39;</span><span class="hl-1">),</span><br/><span class="hl-1">    </span><span class="hl-0">User</span><span class="hl-1"> = </span><span class="hl-5">require</span><span class="hl-1">(</span><span class="hl-4">&#39;../models/user-model.js&#39;</span><span class="hl-1">);</span><br/><br/><span class="hl-10">module</span><span class="hl-1">.</span><span class="hl-10">exports</span><span class="hl-1"> = </span><span class="hl-2">function</span><span class="hl-1"> (</span><span class="hl-0">agenda</span><span class="hl-1">) {</span><br/><span class="hl-1">    </span><span class="hl-0">agenda</span><span class="hl-1">.</span><span class="hl-5">define</span><span class="hl-1">(</span><span class="hl-4">&#39;registration email&#39;</span><span class="hl-1">, </span><span class="hl-2">async</span><span class="hl-1"> </span><span class="hl-0">job</span><span class="hl-1"> </span><span class="hl-2">=&gt;</span><span class="hl-1"> {</span><br/><span class="hl-1">        </span><span class="hl-2">const</span><span class="hl-1"> </span><span class="hl-3">user</span><span class="hl-1"> = </span><span class="hl-7">await</span><span class="hl-1"> </span><span class="hl-0">User</span><span class="hl-1">.</span><span class="hl-5">get</span><span class="hl-1">(</span><span class="hl-0">job</span><span class="hl-1">.</span><span class="hl-0">attrs</span><span class="hl-1">.</span><span class="hl-0">data</span><span class="hl-1">.</span><span class="hl-0">userId</span><span class="hl-1">);</span><br/><span class="hl-1">        </span><span class="hl-7">await</span><span class="hl-1"> </span><span class="hl-5">email</span><span class="hl-1">(</span><span class="hl-0">user</span><span class="hl-1">.</span><span class="hl-5">email</span><span class="hl-1">(), </span><span class="hl-4">&#39;Thanks for registering&#39;</span><span class="hl-1">, </span><span class="hl-4">&#39;Thanks for registering &#39;</span><span class="hl-1"> + </span><span class="hl-0">user</span><span class="hl-1">.</span><span class="hl-5">name</span><span class="hl-1">());</span><br/><span class="hl-1">    });</span><br/><br/><span class="hl-1">    </span><span class="hl-0">agenda</span><span class="hl-1">.</span><span class="hl-5">define</span><span class="hl-1">(</span><span class="hl-4">&#39;reset password&#39;</span><span class="hl-1">, </span><span class="hl-2">async</span><span class="hl-1"> </span><span class="hl-0">job</span><span class="hl-1"> </span><span class="hl-2">=&gt;</span><span class="hl-1"> {</span><br/><span class="hl-1">        </span><span class="hl-6">// Etc</span><br/><span class="hl-1">    });</span><br/><br/><span class="hl-1">    </span><span class="hl-6">// More email related jobs</span><br/><span class="hl-1">};</span>
+</code></pre>
+<p>lib/agenda.js</p>
+<pre><code class="language-js"><span class="hl-2">const</span><span class="hl-1"> </span><span class="hl-3">Agenda</span><span class="hl-1"> = </span><span class="hl-5">require</span><span class="hl-1">(</span><span class="hl-4">&#39;agenda&#39;</span><span class="hl-1">);</span><br/><br/><span class="hl-2">const</span><span class="hl-1"> </span><span class="hl-3">sqlAddress</span><span class="hl-1"> = </span><span class="hl-4">&#39;postgres://postgres:postgres@localhost:5432/agenda_db&#39;</span><span class="hl-1">;</span><br/><br/><span class="hl-2">const</span><span class="hl-1"> </span><span class="hl-3">agenda</span><span class="hl-1"> = </span><span class="hl-2">new</span><span class="hl-1"> </span><span class="hl-5">Agenda</span><span class="hl-1">(</span><br/><span class="hl-1">    {</span><br/><span class="hl-1">        </span><span class="hl-0">db:</span><span class="hl-1"> {</span><br/><span class="hl-1">            </span><span class="hl-0">address:</span><span class="hl-1"> </span><span class="hl-0">sqlAddress</span><span class="hl-1">,</span><br/><span class="hl-1">            </span><span class="hl-0">options:</span><span class="hl-1"> {</span><br/><span class="hl-1">                </span><span class="hl-0">dialect:</span><span class="hl-1"> </span><span class="hl-4">&#39;postgres&#39;</span><br/><span class="hl-1">            }</span><br/><span class="hl-1">        }</span><br/><span class="hl-1">    }</span><br/><span class="hl-1">);</span><br/><br/><span class="hl-2">const</span><span class="hl-1"> </span><span class="hl-3">jobTypes</span><span class="hl-1"> = </span><span class="hl-0">process</span><span class="hl-1">.</span><span class="hl-0">env</span><span class="hl-1">.</span><span class="hl-3">JOB_TYPES</span><span class="hl-1"> ? </span><span class="hl-0">process</span><span class="hl-1">.</span><span class="hl-0">env</span><span class="hl-1">.</span><span class="hl-3">JOB_TYPES</span><span class="hl-1">.</span><span class="hl-5">split</span><span class="hl-1">(</span><span class="hl-4">&#39;,&#39;</span><span class="hl-1">) : [];</span><br/><br/><span class="hl-0">jobTypes</span><span class="hl-1">.</span><span class="hl-5">forEach</span><span class="hl-1">(</span><span class="hl-0">type</span><span class="hl-1"> </span><span class="hl-2">=&gt;</span><span class="hl-1"> {</span><br/><span class="hl-1">    </span><span class="hl-5">require</span><span class="hl-1">(</span><span class="hl-4">&#39;./jobs/&#39;</span><span class="hl-1"> + </span><span class="hl-0">type</span><span class="hl-1">)(</span><span class="hl-0">agenda</span><span class="hl-1">);</span><br/><span class="hl-1">});</span><br/><br/><span class="hl-7">if</span><span class="hl-1"> (</span><span class="hl-0">jobTypes</span><span class="hl-1">.</span><span class="hl-0">length</span><span class="hl-1">) {</span><br/><span class="hl-1">    </span><span class="hl-0">agenda</span><span class="hl-1">.</span><span class="hl-5">start</span><span class="hl-1">(); </span><span class="hl-6">// Returns a promise, which should be handled appropriately</span><br/><span class="hl-1">}</span><br/><br/><span class="hl-10">module</span><span class="hl-1">.</span><span class="hl-10">exports</span><span class="hl-1"> = </span><span class="hl-0">agenda</span><span class="hl-1">;</span>
+</code></pre>
+<p>lib/controllers/user-controller.js</p>
+<pre><code class="language-js"><span class="hl-2">let</span><span class="hl-1"> </span><span class="hl-0">app</span><span class="hl-1"> = </span><span class="hl-5">express</span><span class="hl-1">(),</span><br/><span class="hl-1">    </span><span class="hl-0">User</span><span class="hl-1"> = </span><span class="hl-5">require</span><span class="hl-1">(</span><span class="hl-4">&#39;../models/user-model&#39;</span><span class="hl-1">),</span><br/><span class="hl-1">    </span><span class="hl-0">agenda</span><span class="hl-1"> = </span><span class="hl-5">require</span><span class="hl-1">(</span><span class="hl-4">&#39;../worker.js&#39;</span><span class="hl-1">);</span><br/><br/><span class="hl-0">app</span><span class="hl-1">.</span><span class="hl-5">post</span><span class="hl-1">(</span><span class="hl-4">&#39;/users&#39;</span><span class="hl-1">, (</span><span class="hl-0">req</span><span class="hl-1">, </span><span class="hl-0">res</span><span class="hl-1">, </span><span class="hl-0">next</span><span class="hl-1">) </span><span class="hl-2">=&gt;</span><span class="hl-1"> {</span><br/><span class="hl-1">    </span><span class="hl-2">const</span><span class="hl-1"> </span><span class="hl-3">user</span><span class="hl-1"> = </span><span class="hl-2">new</span><span class="hl-1"> </span><span class="hl-5">User</span><span class="hl-1">(</span><span class="hl-0">req</span><span class="hl-1">.</span><span class="hl-0">body</span><span class="hl-1">);</span><br/><span class="hl-1">    </span><span class="hl-0">user</span><span class="hl-1">.</span><span class="hl-5">save</span><span class="hl-1">(</span><span class="hl-0">err</span><span class="hl-1"> </span><span class="hl-2">=&gt;</span><span class="hl-1"> {</span><br/><span class="hl-1">        </span><span class="hl-7">if</span><span class="hl-1"> (</span><span class="hl-0">err</span><span class="hl-1">) {</span><br/><span class="hl-1">            </span><span class="hl-7">return</span><span class="hl-1"> </span><span class="hl-5">next</span><span class="hl-1">(</span><span class="hl-0">err</span><span class="hl-1">);</span><br/><span class="hl-1">        }</span><br/><span class="hl-1">        </span><span class="hl-0">agenda</span><span class="hl-1">.</span><span class="hl-5">now</span><span class="hl-1">(</span><span class="hl-4">&#39;registration email&#39;</span><span class="hl-1">, { </span><span class="hl-0">userId:</span><span class="hl-1"> </span><span class="hl-0">user</span><span class="hl-1">.</span><span class="hl-5">primary</span><span class="hl-1">() });</span><br/><span class="hl-1">        </span><span class="hl-0">res</span><span class="hl-1">.</span><span class="hl-5">send</span><span class="hl-1">(</span><span class="hl-8">201</span><span class="hl-1">, </span><span class="hl-0">user</span><span class="hl-1">.</span><span class="hl-5">toJson</span><span class="hl-1">());</span><br/><span class="hl-1">    });</span><br/><span class="hl-1">});</span>
+</code></pre>
+<p>worker.js</p>
+<pre><code class="language-js"><span class="hl-5">require</span><span class="hl-1">(</span><span class="hl-4">&#39;./lib/agenda.js&#39;</span><span class="hl-1">);</span>
+</code></pre>
+<p>Now you can do the following in your project:</p>
+<pre><code class="language-bash"><span class="hl-1">node server.js</span>
+</code></pre>
+<p>Fire up an instance with no <code>JOB_TYPES</code>, giving you the ability to process jobs,
+but not wasting resources processing jobs.</p>
+<pre><code class="language-bash"><span class="hl-1">JOB_TYPES=email node server.js</span>
+</code></pre>
+<p>Allow your http server to process email jobs.</p>
+<pre><code class="language-bash"><span class="hl-1">JOB_TYPES=email node worker.js</span>
+</code></pre>
+<p>Fire up an instance that processes email jobs.</p>
+<pre><code class="language-bash"><span class="hl-1">JOB_TYPES=video-processing,image-processing node worker.js</span>
+</code></pre>
+<p>Fire up an instance that processes video-processing/image-processing jobs. Good for a heavy hitting server.</p>
+
+<a href="#to-turn-on-logging-please-set-your-debug-env-variable-like-so" id="to-turn-on-logging-please-set-your-debug-env-variable-like-so" style="color: inherit; text-decoration: none;">
+  <h4>To turn on logging, please set your DEBUG env variable like so:</h4>
+</a>
+<ul>
+<li>OSX: <code>DEBUG=&quot;agenda:*&quot; ts-node src/index.ts</code></li>
+<li>Linux: <code>DEBUG=&quot;agenda:*&quot; ts-node src/index.ts</code></li>
+<li>Windows CMD: <code>set DEBUG=agenda:*</code></li>
+<li>Windows PowerShell: <code>$env:DEBUG = &quot;agenda:*&quot;</code></li>
+</ul>
+<p>While not necessary, attaching a text file with this debug information would
+be extremely useful in debugging certain issues and is encouraged.</p>
+
+<a href="#sandboxed-worker---use-child-processes" id="sandboxed-worker---use-child-processes" style="color: inherit; text-decoration: none;">
+  <h1>Sandboxed Worker - use child processes</h1>
+</a>
+<p>It&#39;s possible to start jobs in a child process, this helps for example for long running processes
+to seperate them from the main thread. For example if one process consumes too much memory and gets killed,
+it will not affect any others.
+To use this feature, several steps are required.
+1.) create a childWorker helper.
+The subrocess has a complete seperate context, so there are no database connections or anything else that can be shared.
+Therefore you have to ensure that all required connections and initializations are done here too. Furthermore
+you also have to load the correct job definition so that agenda nows what code it must execute. Therefore 3 parameters
+are passed to the childWorker: name, jobId and path to the job definition.</p>
+<p>Example file can look like this:</p>
+<p>childWorker.ts</p>
+<pre><code class="language-ts"><span class="hl-7">import</span><span class="hl-1"> </span><span class="hl-4">&#39;reflect-metadata&#39;</span><span class="hl-1">;</span><br/><br/><span class="hl-0">process</span><span class="hl-1">.</span><span class="hl-5">on</span><span class="hl-1">(</span><span class="hl-4">&#39;message&#39;</span><span class="hl-1">, </span><span class="hl-0">message</span><span class="hl-1"> </span><span class="hl-2">=&gt;</span><span class="hl-1"> {</span><br/><span class="hl-1">  </span><span class="hl-7">if</span><span class="hl-1"> (</span><span class="hl-0">message</span><span class="hl-1"> === </span><span class="hl-4">&#39;cancel&#39;</span><span class="hl-1">) {</span><br/><span class="hl-1">    </span><span class="hl-0">process</span><span class="hl-1">.</span><span class="hl-5">exit</span><span class="hl-1">(</span><span class="hl-8">2</span><span class="hl-1">);</span><br/><span class="hl-1">  } </span><span class="hl-7">else</span><span class="hl-1"> {</span><br/><span class="hl-1">    </span><span class="hl-0">console</span><span class="hl-1">.</span><span class="hl-5">log</span><span class="hl-1">(</span><span class="hl-4">&#39;got message&#39;</span><span class="hl-1">, </span><span class="hl-0">message</span><span class="hl-1">);</span><br/><span class="hl-1">  }</span><br/><span class="hl-1">});</span><br/><br/><span class="hl-1">(</span><span class="hl-2">async</span><span class="hl-1"> () </span><span class="hl-2">=&gt;</span><span class="hl-1"> {</span><br/><span class="hl-1">    </span><span class="hl-2">const</span><span class="hl-1"> </span><span class="hl-3">sequelize</span><span class="hl-1"> = </span><span class="hl-6">/** connect to database */</span><br/><br/><span class="hl-1">  </span><span class="hl-6">/** do other required initializations */</span><br/><br/><span class="hl-1">  </span><span class="hl-6">// get process arguments (name, jobId and path to agenda definition file)</span><br/><span class="hl-1">    </span><span class="hl-2">const</span><span class="hl-1"> [, , </span><span class="hl-3">name</span><span class="hl-1">, </span><span class="hl-3">jobId</span><span class="hl-1">, </span><span class="hl-3">agendaDefinition</span><span class="hl-1">] = </span><span class="hl-0">process</span><span class="hl-1">.</span><span class="hl-0">argv</span><span class="hl-1">;</span><br/><br/><span class="hl-1">  </span><span class="hl-6">// set fancy process title</span><br/><span class="hl-1">    </span><span class="hl-0">process</span><span class="hl-1">.</span><span class="hl-0">title</span><span class="hl-1"> = </span><span class="hl-4">`</span><span class="hl-2">${</span><span class="hl-0">process</span><span class="hl-11">.</span><span class="hl-0">title</span><span class="hl-2">}</span><span class="hl-4"> (sub worker: </span><span class="hl-2">${</span><span class="hl-0">name</span><span class="hl-2">}</span><span class="hl-4">/</span><span class="hl-2">${</span><span class="hl-0">jobId</span><span class="hl-2">}</span><span class="hl-4">)`</span><span class="hl-1">;</span><br/><br/><span class="hl-1">  </span><span class="hl-6">// initialize Agenda in &quot;forkedWorker&quot; mode</span><br/><span class="hl-1">    </span><span class="hl-2">const</span><span class="hl-1"> </span><span class="hl-3">agenda</span><span class="hl-1"> = </span><span class="hl-2">new</span><span class="hl-1"> </span><span class="hl-5">Agenda</span><span class="hl-1">({ </span><span class="hl-0">name:</span><span class="hl-1"> </span><span class="hl-4">`subworker-</span><span class="hl-2">${</span><span class="hl-0">name</span><span class="hl-2">}</span><span class="hl-4">`</span><span class="hl-1">, </span><span class="hl-0">forkedWorker:</span><span class="hl-1"> </span><span class="hl-2">true</span><span class="hl-1"> });</span><br/><span class="hl-1">    </span><span class="hl-6">// connect agenda (but do not start it)</span><br/><span class="hl-1">    </span><span class="hl-7">await</span><span class="hl-1"> </span><span class="hl-0">agenda</span><span class="hl-1">.</span><span class="hl-5">sql</span><span class="hl-1">(</span><span class="hl-0">sequelize</span><span class="hl-1">);</span><br/><br/><span class="hl-1">    </span><span class="hl-7">if</span><span class="hl-1"> (!</span><span class="hl-0">name</span><span class="hl-1"> || !</span><span class="hl-0">jobId</span><span class="hl-1">) {</span><br/><span class="hl-1">        </span><span class="hl-7">throw</span><span class="hl-1"> </span><span class="hl-2">new</span><span class="hl-1"> </span><span class="hl-10">Error</span><span class="hl-1">(</span><span class="hl-4">`invalid parameters: </span><span class="hl-2">${</span><span class="hl-10">JSON</span><span class="hl-11">.</span><span class="hl-5">stringify</span><span class="hl-11">(</span><span class="hl-0">process</span><span class="hl-11">.</span><span class="hl-0">argv</span><span class="hl-11">)</span><span class="hl-2">}</span><span class="hl-4">`</span><span class="hl-1">);</span><br/><span class="hl-1">    }</span><br/><br/><span class="hl-1">  </span><span class="hl-6">// load job definition</span><br/><span class="hl-1">  </span><span class="hl-6">/** in this case the file is for example ../some/path/definitions.js</span><br/><span class="hl-6">  with a content like:</span><br/><span class="hl-6">  export default (agenda: Agenda, definitionOnly = false) =&gt; {</span><br/><span class="hl-6">    agenda.define(</span><br/><span class="hl-6">      &#39;some job&#39;,</span><br/><span class="hl-6">      async (notification: {</span><br/><span class="hl-6">        attrs: { data: { dealId: string; orderId: TypeObjectId&lt;IOrder&gt; } };</span><br/><span class="hl-6">      }) =&gt; {</span><br/><span class="hl-6">        // do something</span><br/><span class="hl-6">      }</span><br/><span class="hl-6">    );</span><br/><br/><span class="hl-6">    if (!definitionOnly) {</span><br/><span class="hl-6">        // here you can create scheduled jobs or other things</span><br/><span class="hl-6">    }</span><br/><span class="hl-6">    });</span><br/><span class="hl-6">  */</span><br/><span class="hl-1">    </span><span class="hl-7">if</span><span class="hl-1"> (</span><span class="hl-0">agendaDefinition</span><span class="hl-1">) {</span><br/><span class="hl-1">        </span><span class="hl-2">const</span><span class="hl-1"> </span><span class="hl-3">loadDefinition</span><span class="hl-1"> = </span><span class="hl-7">await</span><span class="hl-1"> </span><span class="hl-5">import</span><span class="hl-1">(</span><span class="hl-0">agendaDefinition</span><span class="hl-1">);</span><br/><span class="hl-1">        (</span><span class="hl-0">loadDefinition</span><span class="hl-1">.</span><span class="hl-0">default</span><span class="hl-1"> || </span><span class="hl-0">loadDefinition</span><span class="hl-1">)(</span><span class="hl-0">agenda</span><span class="hl-1">, </span><span class="hl-2">true</span><span class="hl-1">);</span><br/><span class="hl-1">    }</span><br/><br/><span class="hl-1">  </span><span class="hl-6">// run this job now</span><br/><span class="hl-1">    </span><span class="hl-7">await</span><span class="hl-1"> </span><span class="hl-0">agenda</span><span class="hl-1">.</span><span class="hl-5">runForkedJob</span><span class="hl-1">(</span><span class="hl-0">jobId</span><span class="hl-1">);</span><br/><br/><span class="hl-1">  </span><span class="hl-6">// disconnect database and exit</span><br/><span class="hl-1">    </span><span class="hl-0">process</span><span class="hl-1">.</span><span class="hl-5">exit</span><span class="hl-1">(</span><span class="hl-8">0</span><span class="hl-1">);</span><br/><span class="hl-1">})().</span><span class="hl-5">catch</span><span class="hl-1">(</span><span class="hl-0">err</span><span class="hl-1"> </span><span class="hl-2">=&gt;</span><span class="hl-1"> {</span><br/><span class="hl-1">    </span><span class="hl-0">console</span><span class="hl-1">.</span><span class="hl-5">error</span><span class="hl-1">(</span><span class="hl-4">&#39;err&#39;</span><span class="hl-1">, </span><span class="hl-0">err</span><span class="hl-1">);</span><br/><span class="hl-1">    </span><span class="hl-7">if</span><span class="hl-1"> (</span><span class="hl-0">process</span><span class="hl-1">.</span><span class="hl-0">send</span><span class="hl-1">) {</span><br/><span class="hl-1">        </span><span class="hl-0">process</span><span class="hl-1">.</span><span class="hl-5">send</span><span class="hl-1">(</span><span class="hl-10">JSON</span><span class="hl-1">.</span><span class="hl-5">stringify</span><span class="hl-1">(</span><span class="hl-0">err</span><span class="hl-1">));</span><br/><span class="hl-1">    }</span><br/><span class="hl-1">    </span><span class="hl-0">process</span><span class="hl-1">.</span><span class="hl-5">exit</span><span class="hl-1">(</span><span class="hl-8">1</span><span class="hl-1">);</span><br/><span class="hl-1">});</span><br/><br/>
+</code></pre>
+<p>Ensure to only define job definitions during this step, otherwise you create some
+overhead (e.g. if you create new jobs inside the defintion files). That&#39;s why I call
+the defintion file with agenda and a second paramter that is set to true. If this
+parameter is true, I do not initialize any jobs (create jobs etc..)</p>
+<p>2.) to use this, you have to enable it on a job. Set forkMode to true:</p>
+<pre><code class="language-ts"><span class="hl-2">const</span><span class="hl-1"> </span><span class="hl-3">job</span><span class="hl-1"> = </span><span class="hl-0">agenda</span><span class="hl-1">.</span><span class="hl-5">create</span><span class="hl-1">(</span><span class="hl-4">&#39;some job&#39;</span><span class="hl-1">, { </span><span class="hl-0">meep:</span><span class="hl-1"> </span><span class="hl-8">1</span><span class="hl-1"> });</span><br/><span class="hl-0">job</span><span class="hl-1">.</span><span class="hl-5">forkMode</span><span class="hl-1">(</span><span class="hl-2">true</span><span class="hl-1">);</span><br/><span class="hl-7">await</span><span class="hl-1"> </span><span class="hl-0">job</span><span class="hl-1">.</span><span class="hl-5">save</span><span class="hl-1">();</span>
+</code></pre>
+
+<a href="#acknowledgements" id="acknowledgements" style="color: inherit; text-decoration: none;">
+  <h1>Acknowledgements</h1>
+</a>
+<ul>
+<li>Agenda was originally created by <a href="https://github.com/rschmukler">@rschmukler</a>.</li>
+<li><a href="https://github.com/agenda/agendash">Agendash</a> was originally created by <a href="https://github.com/joeframbach">@joeframbach</a>.</li>
+<li>These days Agenda has a great community of <a href="https://github.com/hokify/agenda/graphs/contributors">contributors</a> around it. Join us!</li>
+</ul>
+
+<a href="#license" id="license" style="color: inherit; text-decoration: none;">
+  <h1>License</h1>
+</a>
+<p><a href="LICENSE.md">The MIT License</a></p>
+</div></div>
+<div class="col-4 col-menu menu-sticky-wrap menu-highlight">
+<div class="tsd-navigation settings">
+<details class="tsd-index-accordion"><summary class="tsd-accordion-summary">
+<h3><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M4.93896 8.531L12 15.591L19.061 8.531L16.939 6.409L12 11.349L7.06098 6.409L4.93896 8.531Z" fill="var(--color-text)"></path></svg> Settings</h3></summary>
+<div class="tsd-accordion-details">
+<div class="tsd-filter-visibility">
+<h4 class="uppercase">Member Visibility</h4><form>
+<ul id="tsd-filter-options">
+<li class="tsd-filter-item"><label class="tsd-filter-input"><input type="checkbox" id="tsd-filter-protected" name="protected"/><svg width="32" height="32" viewBox="0 0 32 32" aria-hidden="true"><rect class="tsd-checkbox-background" width="30" height="30" x="1" y="1" rx="6" fill="none"></rect><path class="tsd-checkbox-checkmark" d="M8.35422 16.8214L13.2143 21.75L24.6458 10.25" stroke="none" stroke-width="3.5" stroke-linejoin="round" fill="none"></path></svg><span>Protected</span></label></li>
+<li class="tsd-filter-item"><label class="tsd-filter-input"><input type="checkbox" id="tsd-filter-private" name="private"/><svg width="32" height="32" viewBox="0 0 32 32" aria-hidden="true"><rect class="tsd-checkbox-background" width="30" height="30" x="1" y="1" rx="6" fill="none"></rect><path class="tsd-checkbox-checkmark" d="M8.35422 16.8214L13.2143 21.75L24.6458 10.25" stroke="none" stroke-width="3.5" stroke-linejoin="round" fill="none"></path></svg><span>Private</span></label></li>
+<li class="tsd-filter-item"><label class="tsd-filter-input"><input type="checkbox" id="tsd-filter-inherited" name="inherited" checked/><svg width="32" height="32" viewBox="0 0 32 32" aria-hidden="true"><rect class="tsd-checkbox-background" width="30" height="30" x="1" y="1" rx="6" fill="none"></rect><path class="tsd-checkbox-checkmark" d="M8.35422 16.8214L13.2143 21.75L24.6458 10.25" stroke="none" stroke-width="3.5" stroke-linejoin="round" fill="none"></path></svg><span>Inherited</span></label></li>
+<li class="tsd-filter-item"><label class="tsd-filter-input"><input type="checkbox" id="tsd-filter-external" name="external"/><svg width="32" height="32" viewBox="0 0 32 32" aria-hidden="true"><rect class="tsd-checkbox-background" width="30" height="30" x="1" y="1" rx="6" fill="none"></rect><path class="tsd-checkbox-checkmark" d="M8.35422 16.8214L13.2143 21.75L24.6458 10.25" stroke="none" stroke-width="3.5" stroke-linejoin="round" fill="none"></path></svg><span>External</span></label></li></ul></form></div>
+<div class="tsd-theme-toggle">
+<h4 class="uppercase">Theme</h4><select id="theme"><option value="os">OS</option><option value="light">Light</option><option value="dark">Dark</option></select></div></div></details></div>
+<nav class="tsd-navigation primary">
+<details class="tsd-index-accordion" open><summary class="tsd-accordion-summary">
+<h3><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M4.93896 8.531L12 15.591L19.061 8.531L16.939 6.409L12 11.349L7.06098 6.409L4.93896 8.531Z" fill="var(--color-text)"></path></svg> Modules</h3></summary>
+<div class="tsd-accordion-details">
+<ul>
+<li class="current selected"><a href="modules.html">agenda-<wbr/>sql</a>
+<ul></ul></li></ul></div></details></nav>
+<nav class="tsd-navigation secondary menu-sticky">
+<ul>
+<li class="tsd-kind-class"><a href="classes/Agenda.html" class="tsd-index-link"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><rect fill="var(--color-icon-background)" stroke="var(--color-ts-class)" stroke-width="1.5" x="1" y="1" width="22" height="22" rx="6" id="icon-128-path"></rect><path d="M11.898 16.1201C11.098 16.1201 10.466 15.8961 10.002 15.4481C9.53803 15.0001 9.30603 14.3841 9.30603 13.6001V9.64012C9.30603 8.85612 9.53803 8.24012 10.002 7.79212C10.466 7.34412 11.098 7.12012 11.898 7.12012C12.682 7.12012 13.306 7.34812 13.77 7.80412C14.234 8.25212 14.466 8.86412 14.466 9.64012H13.386C13.386 9.14412 13.254 8.76412 12.99 8.50012C12.734 8.22812 12.37 8.09212 11.898 8.09212C11.426 8.09212 11.054 8.22412 10.782 8.48812C10.518 8.75212 10.386 9.13212 10.386 9.62812V13.6001C10.386 14.0961 10.518 14.4801 10.782 14.7521C11.054 15.0161 11.426 15.1481 11.898 15.1481C12.37 15.1481 12.734 15.0161 12.99 14.7521C13.254 14.4801 13.386 14.0961 13.386 13.6001H14.466C14.466 14.3761 14.234 14.9921 13.77 15.4481C13.306 15.8961 12.682 16.1201 11.898 16.1201Z" fill="var(--color-text)" id="icon-128-text"></path></svg>Agenda</a></li>
+<li class="tsd-kind-class"><a href="classes/Job.html" class="tsd-index-link"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-128-path"></use><use href="#icon-128-text"></use></svg>Job</a></li>
+<li class="tsd-kind-interface"><a href="interfaces/IAgendaConfig.html" class="tsd-index-link"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><rect fill="var(--color-icon-background)" stroke="var(--color-ts-interface)" stroke-width="1.5" x="1" y="1" width="22" height="22" rx="6" id="icon-256-path"></rect><path d="M9.51 16V15.016H11.298V8.224H9.51V7.24H14.19V8.224H12.402V15.016H14.19V16H9.51Z" fill="var(--color-text)" id="icon-256-text"></path></svg>IAgenda<wbr/>Config</a></li>
+<li class="tsd-kind-interface"><a href="interfaces/IJobDefinition.html" class="tsd-index-link"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-256-path"></use><use href="#icon-256-text"></use></svg>IJob<wbr/>Definition</a></li>
+<li class="tsd-kind-interface"><a href="interfaces/IJobParameters.html" class="tsd-index-link"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-256-path"></use><use href="#icon-256-text"></use></svg>IJob<wbr/>Parameters</a></li>
+<li class="tsd-kind-interface"><a href="interfaces/ISqlConfig.html" class="tsd-index-link"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-256-path"></use><use href="#icon-256-text"></use></svg>ISql<wbr/>Config</a></li>
+<li class="tsd-kind-interface"><a href="interfaces/ISqlConnection.html" class="tsd-index-link"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-256-path"></use><use href="#icon-256-text"></use></svg>ISql<wbr/>Connection</a></li>
+<li class="tsd-kind-interface"><a href="interfaces/ISqlOptions.html" class="tsd-index-link"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-256-path"></use><use href="#icon-256-text"></use></svg>ISql<wbr/>Options</a></li>
+<li class="tsd-kind-type-alias"><a href="types/DefinitionProcessor.html" class="tsd-index-link"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><rect fill="var(--color-icon-background)" stroke="var(--color-ts)" stroke-width="1.5" x="1" y="1" width="22" height="22" rx="6" id="icon-4194304-path"></rect><path d="M11.31 16V8.224H8.91V7.24H14.79V8.224H12.39V16H11.31Z" fill="var(--color-text)" id="icon-4194304-text"></path></svg>Definition<wbr/>Processor</a></li>
+<li class="tsd-kind-type-alias"><a href="types/JobWithId.html" class="tsd-index-link"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-4194304-path"></use><use href="#icon-4194304-text"></use></svg>Job<wbr/>With<wbr/>Id</a></li>
+<li class="tsd-kind-type-alias"><a href="types/TJobDatefield.html" class="tsd-index-link"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><use href="#icon-4194304-path"></use><use href="#icon-4194304-text"></use></svg>TJob<wbr/>Datefield</a></li>
+<li class="tsd-kind-variable"><a href="variables/datefields.html" class="tsd-index-link"><svg class="tsd-kind-icon" width="24" height="24" viewBox="0 0 24 24"><rect fill="var(--color-icon-background)" stroke="var(--color-ts-variable)" stroke-width="1.5" x="1" y="1" width="22" height="22" rx="6" id="icon-32-path"></rect><path d="M11.106 16L8.85 7.24H9.966L11.454 13.192C11.558 13.608 11.646 13.996 11.718 14.356C11.79 14.708 11.842 14.976 11.874 15.16C11.906 14.976 11.954 14.708 12.018 14.356C12.09 13.996 12.178 13.608 12.282 13.192L13.758 7.24H14.85L12.582 16H11.106Z" fill="var(--color-text)" id="icon-32-text"></path></svg>datefields</a></li></ul></nav></div></div>
+<div class="container tsd-generator">
+<p>Generated using <a href="https://typedoc.org/" target="_blank">TypeDoc</a></p></div>
+<div class="overlay"></div><script src="assets/main.js"></script></body></html>

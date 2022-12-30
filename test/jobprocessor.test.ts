@@ -2,8 +2,8 @@
 import { fail } from 'assert';
 import { expect } from 'chai';
 
-import { Agenda } from '../src';
 import type { Sequelize } from 'sequelize';
+import { Agenda } from '../src';
 import { mockSql } from './helpers/mock-sql';
 import { JobModel } from '../src/sequelize/models/job';
 
@@ -257,6 +257,7 @@ describe('JobProcessor', () => {
 		await agenda.start();
 
 		let runningJobs = 0;
+		// eslint-disable-next-line no-async-promise-executor
 		const allJobsStarted = new Promise(async resolve => {
 			do {
 				runningJobs = (await agenda.getRunningStats()).runningJobs as number;

@@ -33,7 +33,7 @@ const clearJobs = async (): Promise<void> => {
 };
 
 // Slow timeouts for Travis
-const jobTimeout = 500;
+const jobTimeout = 1500;
 const jobType = 'do work';
 const jobProcessor = () => {};
 
