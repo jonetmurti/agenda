@@ -3,9 +3,9 @@
 import * as delay from 'delay';
 import { expect } from 'chai';
 
+import { Op, Sequelize } from 'sequelize';
 import { Agenda } from '../src';
 import { Job } from '../src/Job';
-import { Op, Sequelize } from 'sequelize';
 import { JobModel } from '../src/sequelize/models/job';
 import { mockSql } from './helpers/mock-sql';
 
@@ -23,7 +23,7 @@ const clearJobs = async (): Promise<void> => {
 };
 
 // Slow timeouts for Travis
-const jobTimeout = 500;
+const jobTimeout = 1500;
 const jobType = 'do work';
 const jobProcessor = () => {};
 
@@ -171,7 +171,12 @@ describe('Agenda', () => {
 		});
 		describe('sort', () => {
 			it('returns itself', () => {
-				expect(globalAgenda.sort([['nextRunAt', 'ASC'], ['priority', 'DESC']])).to.equal(globalAgenda);
+				expect(
+					globalAgenda.sort([
+						['nextRunAt', 'ASC'],
+						['priority', 'DESC']
+					])
+				).to.equal(globalAgenda);
 			});
 			it('sets the default sort option', () => {
 				globalAgenda.sort([['nextRunAt', 'DESC']]);
@@ -282,6 +287,112 @@ describe('Agenda', () => {
 			describe('with array of names specified', () => {
 				it('returns array of jobs', async () => {
 					expect(await globalAgenda.every('5 minutes', ['send email', 'some job'])).to.be.an(
+						'array'
+					);
+				});
+			});
+		});
+
+		describe('repeat', () => {
+			describe('with a job name specified', () => {
+				it('returns a job', async () => {
+					expect(await globalAgenda.repeat('5 minutes', 'send email')).to.be.an.instanceof(Job);
+				});
+				it('sets the repeatInterval', async () => {
+					expect(
+						await globalAgenda
+							.repeat('5 seconds', 'send email')
+							.then(({ attrs }) => attrs.repeatInterval)
+					).to.equal('5 seconds');
+				});
+				it('sets the agenda', async () => {
+					expect(
+						await globalAgenda.repeat('5 seconds', 'send email').then(({ agenda }) => agenda)
+					).to.equal(globalAgenda);
+				});
+				it('should create a different job that was previously scheduled with `repeat`', async () => {
+					await globalAgenda.repeat(10, 'shouldBeMultipleJob');
+					await delay(10);
+					await globalAgenda.repeat(20, 'shouldBeMultipleJob');
+
+					// Give the saves a little time to propagate
+					await delay(jobTimeout);
+
+					const res = await globalAgenda.jobs({ name: 'shouldBeMultipleJob' });
+					expect(res).to.have.length(2);
+				});
+				it('should update a job that was previously scheduled with `repeat`', async () => {
+					await globalAgenda.repeat(
+						'5 seconds',
+						'shouldBeSingleJob',
+						{ id: 'abc' },
+						{ unique: { 'data.id': 'abc' } }
+					);
+					await delay(10);
+					await globalAgenda.repeat(
+						'10 seconds',
+						'shouldBeSingleJob',
+						{ id: 'abc' },
+						{ unique: { 'data.id': 'abc' } }
+					);
+
+					// Give the saves a little time to propagate
+					await delay(jobTimeout);
+
+					const res = await globalAgenda.jobs({ name: 'shouldBeSingleJob' });
+					expect(res).to.have.length(1);
+					expect(res[0].attrs.repeatInterval).to.equal('10 seconds');
+				});
+				it('should not update a job that was previously scheduled with `repeat`', async () => {
+					await globalAgenda.repeat(
+						'5 seconds',
+						'shouldBeSingleJob',
+						{ id: 'abc' },
+						{ unique: { 'data.id': 'abc' }, uniqueOpts: { insertOnly: true } }
+					);
+					await delay(10);
+					await globalAgenda.repeat(
+						'10 seconds',
+						'shouldBeSingleJob',
+						{ id: 'abc' },
+						{ unique: { 'data.id': 'abc' }, uniqueOpts: { insertOnly: true } }
+					);
+
+					// Give the saves a little time to propagate
+					await delay(jobTimeout);
+
+					const res = await globalAgenda.jobs({ name: 'shouldBeSingleJob' });
+					expect(res).to.have.length(1);
+					expect(res[0].attrs.repeatInterval).to.equal('5 seconds');
+				});
+				// it('should not run immediately if options.skipImmediate is true', async () => {
+				// 	const jobName = 'send email';
+				// 	await globalAgenda.every('5 minutes', jobName, {}, { skipImmediate: true });
+				// 	const job = (await globalAgenda.jobs({ name: jobName }))[0];
+				// 	let nextRunAt: Date | number = job.attrs.nextRunAt!;
+				// 	if (typeof nextRunAt === 'string') {
+				// 		nextRunAt = new Date(nextRunAt);
+				// 	}
+				// 	nextRunAt = nextRunAt.getTime();
+				// 	const now = new Date().getTime();
+				// 	expect(nextRunAt - now > 0).to.equal(true);
+				// });
+				// it('should run immediately if options.skipImmediate is false', async () => {
+				// 	const jobName = 'send email';
+				// 	await globalAgenda.every('5 minutes', jobName, {}, { skipImmediate: false });
+				// 	const job = (await globalAgenda.jobs({ name: jobName }))[0];
+				// 	let nextRunAt: Date | number = job.attrs.nextRunAt!;
+				// 	if (typeof nextRunAt === 'string') {
+				// 		nextRunAt = new Date(nextRunAt);
+				// 	}
+				// 	nextRunAt = nextRunAt.getTime();
+				// 	const now = new Date().getTime();
+				// 	expect(nextRunAt - now <= 0).to.equal(true);
+				// });
+			});
+			describe('with array of names specified', () => {
+				it('returns array of jobs', async () => {
+					expect(await globalAgenda.repeat('5 minutes', ['send email', 'some job'])).to.be.an(
 						'array'
 					);
 				});
@@ -436,13 +547,13 @@ describe('Agenda', () => {
 						.schedule(time)
 						.save();
 
-						const jobs = await JobModel.findAll({
-							where: {
-								name: 'unique job'
-							}
-						});
-	
-						expect(jobs).to.have.length(2);
+					const jobs = await JobModel.findAll({
+						where: {
+							name: 'unique job'
+						}
+					});
+
+					expect(jobs).to.have.length(2);
 				});
 			});
 		});
