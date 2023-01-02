@@ -1,6 +1,6 @@
 {
   "name": "agenda-sql",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "SQL-backed job scheduler for Node.js based on Agenda (currently tested on MySQL and PostgreSQL).",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -25,7 +25,7 @@
     "mocha-debug": "DEBUG=agenda:**,-agenda:internal:** mocha --reporter spec -b",
     "mocha-debug-internal": "DEBUG=agenda:internal:** mocha --reporter spec -b",
     "mocha-debug-all": "DEBUG=agenda:** mocha --reporter spec -b",
-    "docs": "typedoc --out docs/agenda-sql/1.1.0 src/index.ts"
+    "docs": "typedoc --out docs/agenda-sql/1.1.x src/index.ts"
   },
   "config": {
     "blanket": {
