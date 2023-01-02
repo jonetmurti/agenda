@@ -23,7 +23,7 @@ export class Migration {
 			context: sequelize.getQueryInterface(),
 			storage: new SequelizeStorage({
 				sequelize,
-				tableName: 'sequelize_meta'
+				tableName: 'agenda_migration_meta'
 			}),
 			logger: undefined
 		});
